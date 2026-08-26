@@ -1,0 +1,8 @@
+{
+  "name": "count-room",
+  "private": true,
+  "description": "A mobile-friendly blackjack table that teaches basic strategy and Hi-Lo card counting.",
+  "devDependencies": {
+    "playwright": "^1.47.0"
+  }
+}
