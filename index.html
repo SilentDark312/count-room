@@ -415,18 +415,22 @@
       <ul class="plain">
         <li><strong>Hit</strong> — take another card.</li>
         <li><strong>Stand</strong> — keep your total and end your turn.</li>
-        <li><strong>Double Down</strong> — double your bet, but you must take exactly one more card and then stand. Only allowed on your first two cards.</li>
-        <li><strong>Split</strong> — if your first two cards match in rank, split them into two separate hands, each with its own bet and its own turn.</li>
+        <li><strong>Double Down</strong> — double your bet, but you must take exactly one more card and then stand. Only allowed on your first two cards (and, at some table rules, on a hand you just split — see below).</li>
+        <li><strong>Split</strong> — if your first two cards match in rank, split them into two separate hands, each with its own bet and its own turn. This app allows one split per hand.</li>
       </ul>
     </section>
 
     <section class="lesson">
       <div class="eyebrow">The House Rules</div>
       <h2>The dealer never chooses — the rules do</h2>
-      <p>The dealer plays a fixed script: hit on 16 or less, stand on 17 or more (soft 17 included). Knowing this in advance is exactly why a "basic strategy" can be worked out mathematically for every hand you're dealt — see the Strategy tab.</p>
+      <p>The dealer plays a fixed script, posted on the table: always hit 16 or less, always stand on 17 or more. The one thing that varies by casino is <strong>soft 17</strong> (an ace counted as 11, like A,6) — some tables stand on it, some hit it. Knowing the dealer's exact script in advance is exactly why a "basic strategy" can be worked out mathematically for every hand you're dealt — see the Strategy tab.</p>
       <div class="callout">
         <div class="head">Payouts</div>
         A natural blackjack (an ace + a 10-value card on your first two) pays <strong>3 to 2</strong>. A regular win pays even money. A tie is a <strong>push</strong> — your bet comes back. If the dealer's up-card is an ace, you'll be offered <strong>insurance</strong>, a side bet that the dealer has blackjack. Basic strategy says decline it — it's a bad bet for the player in the long run, on its own.
+      </div>
+      <div class="callout">
+        <div class="head">Fewer decks, different rules</div>
+        Casinos rarely just remove decks and leave everything else alone — a shoe with fewer decks already favors the player, so the table rules usually get stingier to compensate. That's genuinely useful to know at a real table: a tempting single-deck game is a package deal with its rules, not a free upgrade. This app models that pairing — pick a shoe size on the Play tab and both the dealer's script and your doubling options change with it, shown in the strategy chart's caption.
       </div>
     </section>
 
@@ -440,7 +444,7 @@
         <div class="hilo-chip mid"><div class="cards">7 – 9</div><div class="tag">0</div></div>
         <div class="hilo-chip high"><div class="cards">10 – A</div><div class="tag">−1</div></div>
       </div>
-      <p>That's your <strong>running count</strong>. Because it means something different in a fresh multi-deck shoe than with half a deck left, divide it by the decks remaining to get the <strong>true count</strong> — the number that actually tells you how rich the remaining cards are. A rising true count is your cue to bet more and, at the more advanced level, deviate from basic strategy on a handful of close decisions. Fewer decks in the shoe means the count swings further per card, so it also means bigger edges, and bigger risk — the Play tab lets you set the shoe from 2 to 8 decks to feel the difference.</p>
+      <p>That's your <strong>running count</strong>. Because it means something different in a fresh multi-deck shoe than with half a deck left, divide it by the decks remaining to get the <strong>true count</strong> — the number that actually tells you how rich the remaining cards are. A rising true count is your cue to bet more and, at the more advanced level, deviate from basic strategy on a handful of close decisions. Fewer decks in the shoe means the count swings further per card, so it also means bigger edges, and bigger risk — the Play tab lets you set the shoe from 1 to 8 decks to feel the difference.</p>
       <div class="callout">
         <div class="head">Is this legal?</div>
         Counting cards is mental math — no device, no marked cards, nothing hidden. It's legal. It's also unwelcome: casinos are private businesses and can bar a player they suspect of it. Practice here first; the Play and Trainer tabs let you build the skill without a bankroll on the line.
@@ -463,7 +467,7 @@
   <main class="screen" id="screen-strategy" hidden>
     <div class="eyebrow">Reference</div>
     <h2>Basic strategy chart</h2>
-    <p class="table-caption">Dealer stands on all 17s · one split per hand, no double after splitting — matched to the rules used on the Play tab. These plays are the standard multi-deck (2–8 deck) chart; real optimal play shifts by at most a card here or there as the shoe gets smaller, so the same chart is used no matter which shoe size you pick.</p>
+    <p class="table-caption">One split per hand, no re-splitting. Table rules otherwise follow the shoe size set on the Play tab — <strong id="strategyRulesCaption">6 decks · dealer stands on all 17s · no double after split</strong> right now. Real single- and double-deck games are almost always spread this way (looser doubling rules make up for the player's edge from fewer decks), so the chart below updates for it; 3+ deck charts differ from each other by at most a card here or there, so they all share one chart.</p>
 
     <div class="legend">
       <div class="item"><span class="swatch H"></span>Hit</div>
@@ -484,7 +488,7 @@
     <div class="strategy-wrap"><table class="strategy" id="tblPairs"></table></div>
 
     <h3 style="font-size:.95rem;">Index plays (the Illustrious 18)</h3>
-    <p class="table-caption"><span style="color:var(--brass-bright); font-weight:700;">Gold</span> = deviate at true count ≥ index. <span style="color:var(--idx-blue); font-weight:700;">Blue</span> = deviate at true count ≤ index. Toggle <strong>Index Plays</strong> on the Play tab to have the hint bar call these out. These are the standard multi-deck indices; real index numbers shift a point or two at smaller shoe sizes, but this table is used as-is at every shoe size offered here.</p>
+    <p class="table-caption"><span style="color:var(--brass-bright); font-weight:700;">Gold</span> = deviate at true count ≥ index. <span style="color:var(--idx-blue); font-weight:700;">Blue</span> = deviate at true count ≤ index. Toggle <strong>Index Plays</strong> on the Play tab to have the hint bar call these out. These numbers are computed for the standard multi-deck, no-DAS game; real indices shift some at 3+ decks and shift more once you're at 1-2 decks with different table rules, but this one table is used as-is at every shoe size here.</p>
     <div class="strategy-wrap">
       <table class="idx" id="tblIndex"></table>
     </div>
@@ -531,6 +535,7 @@
       <div class="field shoe-select">
         <label for="deckSelect">Shoe Size</label>
         <select id="deckSelect">
+          <option value="1">1 deck</option>
           <option value="2">2 decks</option>
           <option value="3">3 decks</option>
           <option value="4">4 decks</option>
@@ -538,6 +543,7 @@
           <option value="8">8 decks</option>
         </select>
       </div>
+      <p class="table-caption" id="rulesCaption" style="text-align:center; margin-top:-.5rem;"></p>
       <div class="bet-readout">
         <div class="amt mono" id="betAmt">$0</div>
         <div class="lbl">Current Bet</div>
@@ -736,22 +742,37 @@
   }
 
   /* ============================================================
-     BASIC STRATEGY (multi-deck, S17, no DAS, 1 split per hand)
+     BASIC STRATEGY
+     Baseline is the standard multi-deck, dealer-stands-soft-17, no-DAS
+     chart. Real 1- and 2-deck games are almost never spread under those
+     same house rules, so the table rules themselves change with shoe
+     size (matching how these games actually run in casinos):
+       1 deck  -> dealer hits soft 17, double after split allowed
+       2 decks -> dealer stands soft 17, double after split allowed
+       3+ decks-> dealer stands soft 17, no double after split (baseline)
+     The h17/das flags below layer the small, well-documented set of
+     total-dependent strategy changes each rule causes onto that baseline,
+     rather than separate from-scratch charts.
   ============================================================ */
   function dealerKey(card){
     if(card.rank==='A') return 'A';
     return rankValue(card.rank)===10 ? '10' : card.rank;
   }
-  function hardAction(total, dk, canDouble){
+  function tableRules(numDecks){
+    if(numDecks===1) return {h17:true,  das:true,  label:'1 deck · dealer hits soft 17 · double after split allowed'};
+    if(numDecks===2) return {h17:false, das:true,  label:'2 decks · dealer stands on all 17s · double after split allowed'};
+    return                  {h17:false, das:false, label:numDecks+' decks · dealer stands on all 17s · no double after split'};
+  }
+  function hardAction(total, dk, canDouble, h17){
     if(total<=8) return 'H';
     if(total===9) return (canDouble && ['3','4','5','6'].includes(dk)) ? 'D' : 'H';
     if(total===10) return (canDouble && ['2','3','4','5','6','7','8','9'].includes(dk)) ? 'D' : 'H';
-    if(total===11) return (dk==='A') ? 'H' : (canDouble ? 'D' : 'H');
+    if(total===11) return (dk==='A') ? (h17 && canDouble ? 'D' : 'H') : (canDouble ? 'D' : 'H');
     if(total===12) return ['4','5','6'].includes(dk) ? 'S' : 'H';
     if(total>=13 && total<=16) return ['2','3','4','5','6'].includes(dk) ? 'S' : 'H';
     return 'S';
   }
-  function softAction(total, dk, canDouble){
+  function softAction(total, dk, canDouble, h17){
     if(total===13||total===14) return (canDouble && ['5','6'].includes(dk)) ? 'D' : 'H';
     if(total===15||total===16) return (canDouble && ['4','5','6'].includes(dk)) ? 'D' : 'H';
     if(total===17) return (canDouble && ['3','4','5','6'].includes(dk)) ? 'D' : 'H';
@@ -760,37 +781,38 @@
       if(['3','4','5','6'].includes(dk)) return canDouble ? 'D' : 'S';
       return 'H';
     }
+    if(total===19) return (h17 && canDouble && dk==='6') ? 'D' : 'S';
     return 'S';
   }
-  function pairAction(pairKey, dk){
+  function pairAction(pairKey, dk, das){
     switch(pairKey){
       case 'A': return 'P';
       case '10': return null;
       case '9': return ['2','3','4','5','6','8','9'].includes(dk) ? 'P' : null;
       case '8': return 'P';
       case '7': return ['2','3','4','5','6','7'].includes(dk) ? 'P' : null;
-      case '6': return ['3','4','5','6'].includes(dk) ? 'P' : null;
+      case '6': return (das ? ['2','3','4','5','6'] : ['3','4','5','6']).includes(dk) ? 'P' : null;
       case '5': return null;
-      case '4': return null;
-      case '3': return ['4','5','6','7'].includes(dk) ? 'P' : null;
-      case '2': return ['4','5','6','7'].includes(dk) ? 'P' : null;
+      case '4': return das && ['5','6'].includes(dk) ? 'P' : null;
+      case '3': return (das ? ['2','3','4','5','6','7'] : ['4','5','6','7']).includes(dk) ? 'P' : null;
+      case '2': return (das ? ['2','3','4','5','6','7'] : ['4','5','6','7']).includes(dk) ? 'P' : null;
     }
     return null;
   }
-  function recommend(hand, dealerUpCard, canDouble, canSplit){
+  function recommend(hand, dealerUpCard, canDouble, canSplit, rules){
     const dk = dealerKey(dealerUpCard);
     const cards = hand.cards;
     if(cards.length===2 && canSplit){
       const v0=rankValue(cards[0].rank), v1=rankValue(cards[1].rank);
       if(v0===v1){
         const pairKey = cards[0].rank==='A' ? 'A' : (v0===10 ? '10' : String(v0));
-        const p = pairAction(pairKey, dk);
+        const p = pairAction(pairKey, dk, rules.das);
         if(p) return 'P';
       }
     }
     const {total, soft} = handValue(cards);
-    if(soft && total<21) return softAction(total, dk, canDouble);
-    return hardAction(total, dk, canDouble);
+    if(soft && total<21) return softAction(total, dk, canDouble, rules.h17);
+    return hardAction(total, dk, canDouble, rules.h17);
   }
   const ACTION_LABEL = {H:'Hit', S:'Stand', D:'Double', P:'Split'};
 
@@ -870,7 +892,7 @@
   /* ============================================================
      GAME STATE (Play tab)
   ============================================================ */
-  const VALID_DECK_COUNTS = [2,3,4,6,8];
+  const VALID_DECK_COUNTS = [1,2,3,4,6,8];
   const DEFAULT_DECKS = 6;
 
   const game = {
@@ -897,6 +919,7 @@
   // classic "6 decks, cut at 1.5 decks" convention, scaled to any shoe size).
   function penetrationCards(){ return game.numDecks * 52 * 0.25; }
 
+  function currentRules(){ return tableRules(game.numDecks); }
   function decksRemaining(){ return game.shoe.length/52; }
   function trueCount(){
     const dr = Math.max(decksRemaining(), 0.25);
@@ -975,21 +998,29 @@
     html += '</tbody>';
     tableEl.innerHTML = html;
   }
-  buildTable($('tblHard'),
-    [17,16,15,14,13,12,11,10,9,8].map(t=>({label:t, total:t})),
-    (row,dk)=>hardAction(row.total, dk, true)
-  );
-  buildTable($('tblSoft'),
-    [{label:'A,7 (18)', total:18},{label:'A,6 (17)', total:17},{label:'A,5 (16)', total:16},
-     {label:'A,4 (15)', total:15},{label:'A,3 (14)', total:14},{label:'A,2 (13)', total:13}],
-    (row,dk)=>softAction(row.total, dk, true)
-  );
-  buildTable($('tblPairs'),
-    [{label:'A,A', key:'A'},{label:'10,10', key:'10'},{label:'9,9', key:'9'},{label:'8,8', key:'8'},
-     {label:'7,7', key:'7'},{label:'6,6', key:'6'},{label:'5,5', key:'5'},{label:'4,4', key:'4'},
-     {label:'3,3', key:'3'},{label:'2,2', key:'2'}],
-    (row,dk)=> pairAction(row.key, dk) || (row.key==='10' ? 'S' : (row.key==='5' ? hardAction(10,dk,true) : 'H'))
-  );
+  function renderStrategyTables(){
+    const rules = currentRules();
+    const capEl = $('strategyRulesCaption');
+    if(capEl) capEl.textContent = rules.label;
+
+    buildTable($('tblHard'),
+      [17,16,15,14,13,12,11,10,9,8].map(t=>({label:t, total:t})),
+      (row,dk)=>hardAction(row.total, dk, true, rules.h17)
+    );
+    buildTable($('tblSoft'),
+      [{label:'A,8 (19)', total:19},{label:'A,7 (18)', total:18},{label:'A,6 (17)', total:17},
+       {label:'A,5 (16)', total:16},{label:'A,4 (15)', total:15},{label:'A,3 (14)', total:14},
+       {label:'A,2 (13)', total:13}],
+      (row,dk)=>softAction(row.total, dk, true, rules.h17)
+    );
+    buildTable($('tblPairs'),
+      [{label:'A,A', key:'A'},{label:'10,10', key:'10'},{label:'9,9', key:'9'},{label:'8,8', key:'8'},
+       {label:'7,7', key:'7'},{label:'6,6', key:'6'},{label:'5,5', key:'5'},{label:'4,4', key:'4'},
+       {label:'3,3', key:'3'},{label:'2,2', key:'2'}],
+      (row,dk)=> pairAction(row.key, dk, rules.das) ||
+        (row.key==='10' ? 'S' : (row.key==='5' ? hardAction(10,dk,true,rules.h17) : 'H'))
+    );
+  }
 
   (function buildIndexTable(){
     const el = $('tblIndex');
@@ -1037,6 +1068,17 @@
 
   function renderShoeInfo(){
     shoeInfoEl.textContent = `Shoe: ${decksRemaining().toFixed(1)} decks left`;
+    const capEl = $('rulesCaption');
+    if(capEl) capEl.textContent = currentRules().label;
+  }
+
+  function canDoubleFor(hand, rules){
+    return hand.cards.length===2 && !hand.isSplitAces &&
+      (!hand.splitUsed || rules.das) && game.bankroll>=hand.bet;
+  }
+  function canSplitFor(hand){
+    return hand.cards.length===2 && !hand.splitUsed && game.playerHands.length===1 &&
+      rankValue(hand.cards[0].rank)===rankValue(hand.cards[1].rank) && game.bankroll>=hand.bet;
   }
 
   function renderDealer(){
@@ -1079,11 +1121,11 @@
     if(!game.hintsOn || game.phase!=='player') { hintTextEl.innerHTML = '—'; return; }
     const hand = activeHand();
     if(!hand){ hintTextEl.innerHTML = '—'; return; }
-    const canDouble = hand.cards.length===2 && !hand.isSplitAces && game.bankroll>=hand.bet;
-    const canSplit = hand.cards.length===2 && !hand.splitUsed && game.playerHands.length===1 &&
-      rankValue(hand.cards[0].rank)===rankValue(hand.cards[1].rank) && game.bankroll>=hand.bet;
+    const rules = currentRules();
+    const canDouble = canDoubleFor(hand, rules);
+    const canSplit = canSplitFor(hand);
 
-    let a = recommend(hand, game.dealer.cards[0], canDouble, canSplit);
+    let a = recommend(hand, game.dealer.cards[0], canDouble, canSplit, rules);
     let isDeviation = false;
     if(game.devPlaysOn){
       const dev = deviationAction(hand, game.dealer.cards[0], trueCount(), canDouble, canSplit);
@@ -1096,9 +1138,8 @@
   function renderActionButtons(){
     const hand = activeHand();
     if(!hand) return;
-    const canDouble = hand.cards.length===2 && !hand.isSplitAces && game.bankroll>=hand.bet;
-    const canSplit = hand.cards.length===2 && !hand.splitUsed && game.playerHands.length===1 &&
-      rankValue(hand.cards[0].rank)===rankValue(hand.cards[1].rank) && game.bankroll>=hand.bet;
+    const canDouble = canDoubleFor(hand, currentRules());
+    const canSplit = canSplitFor(hand);
     $('btnDouble').disabled = !canDouble;
     $('btnSplit').disabled = !canSplit;
   }
@@ -1149,6 +1190,7 @@
     game.runningCount = 0;
     saveState();
     renderShoeInfo();
+    renderStrategyTables();
   });
 
   function startRound(){
@@ -1302,10 +1344,11 @@
 
   function playDealer(){
     revealDealer();
+    const h17 = currentRules().h17;
     const anyLive = game.playerHands.some(h=>handValue(h.cards).total<=21);
     if(anyLive){
       let v = handValue(game.dealer.cards);
-      while(v.total<17){
+      while(v.total<17 || (h17 && v.total===17 && v.soft)){
         const c = drawCard(); countCard(c); game.dealer.cards.push(c);
         v = handValue(game.dealer.cards);
       }
@@ -1549,6 +1592,7 @@
   ============================================================ */
   $('deckSelect').value = String(game.numDecks);
   ensureShoe();
+  renderStrategyTables();
   drillStats();
   quizStats();
   renderAll();
