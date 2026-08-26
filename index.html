@@ -27,6 +27,7 @@
     --act-stand:#3c8079;
     --act-double:#c9a227;
     --act-split:#8a6b98;
+    --idx-blue:#8fb8cf;
     --focus:#e7c65a;
     --radius-s:6px;
     --radius-m:10px;
@@ -165,6 +166,14 @@
   td.act-D{background:rgba(201,162,39,.4); color:#3a2c04;}
   td.act-P{background:rgba(138,107,152,.4); color:#f2e6f7;}
 
+  table.idx{border-collapse:collapse; width:100%; min-width:420px; font-family:'IBM Plex Mono';}
+  table.idx th, table.idx td{padding:.45rem .55rem; text-align:center; font-size:.78rem; border:1px solid rgba(244,236,216,.08);}
+  table.idx th{background:var(--felt-deep); color:var(--brass-bright); font-weight:600;}
+  table.idx td:first-child, table.idx th:first-child{text-align:left; font-weight:700;}
+  table.idx td.idx-num.dir-gte{color:var(--brass-bright); font-weight:700;}
+  table.idx td.idx-num.dir-lte{color:var(--idx-blue); font-weight:700;}
+  table.idx tr:nth-child(odd) td{background:rgba(0,0,0,.12);}
+
   .legend{display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1rem;}
   .legend .item{display:flex; align-items:center; gap:.35rem; font-size:.75rem; color:var(--cream-dim);}
   .legend .swatch{width:14px; height:14px; border-radius:3px;}
@@ -216,13 +225,19 @@
   .shoe-info{display:flex; justify-content:space-between; font-family:'IBM Plex Mono'; font-size:.72rem; color:var(--cream-dim); margin-top:.3rem;}
 
   .hint-bar{
-    display:flex; align-items:center; justify-content:space-between; gap:.6rem;
-    padding:.5rem .7rem; margin-bottom:.7rem;
+    padding:.5rem .7rem; margin-bottom:.5rem;
     border:1px dashed var(--panel-border); border-radius:var(--radius-s);
     font-size:.78rem;
   }
   .hint-bar .suggestion{font-weight:700; color:var(--brass-bright); font-family:'IBM Plex Mono';}
+  .hint-bar .idx-tag{
+    font-size:.6rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+    color:var(--idx-blue); border:1px solid var(--idx-blue); border-radius:99px;
+    padding:.05rem .4rem; margin-left:.4rem;
+  }
+  .hint-toggles{display:flex; justify-content:flex-end; gap:1rem; margin-bottom:.7rem;}
   .toggle-inline{display:flex; align-items:center; gap:.4rem; font-size:.75rem; color:var(--cream-dim); white-space:nowrap;}
+  .insurance-hint{font-size:.78rem; color:var(--idx-blue); margin:-.3rem 0 .7rem;}
   .switch{
     width:34px; height:19px; border-radius:99px; background:rgba(244,236,216,.18);
     position:relative; border:1px solid var(--panel-border); cursor:pointer; flex-shrink:0;
@@ -430,6 +445,17 @@
         Counting cards is mental math — no device, no marked cards, nothing hidden. It's legal. It's also unwelcome: casinos are private businesses and can bar a player they suspect of it. Practice here first; the Play and Trainer tabs let you build the skill without a bankroll on the line.
       </div>
     </section>
+
+    <section class="lesson">
+      <div class="eyebrow">Going Further</div>
+      <h2>Index plays: bending basic strategy to the count</h2>
+      <p>Basic strategy answers "what's correct on average, across every possible shoe?" Once you're tracking a true count, you know the shoe in front of you isn't average anymore — and a handful of close decisions actually flip the other way at specific counts. These count-triggered exceptions are called <strong>index plays</strong>, and each one has an <strong>index number</strong>: the true count at which you switch off the basic-strategy play.</p>
+      <p>The best-known set is the <strong>Illustrious 18</strong>, compiled by Don Schlesinger in <em>Blackjack Attack</em> — the 18 deviations that account for most of the extra edge a counter gets from playing to the count at all, ranked so you get most of the value by learning just the first few. Most of them work the way you'd expect: <em>at or above</em> the index, switch away from the hit/stand basic play. A few run backwards — like standing on 12 vs. a dealer 6 normally, but switching to <em>hit</em> once the count drops low enough that the deck is stacked with small cards. For those, the rule flips: deviate at or <em>below</em> the index.</p>
+      <div class="callout">
+        <div class="head">Try it</div>
+        Flip on <strong>Index Plays</strong> next to the hint toggle on the Play tab, and the suggestion will call out a count play whenever the true count crosses one of these thresholds — see the full table on the Strategy tab.
+      </div>
+    </section>
   </main>
 
   <!-- ================= STRATEGY ================= -->
@@ -455,6 +481,12 @@
     <h3 style="font-size:.95rem;">Pairs</h3>
     <p class="table-caption">Any pair not listed here plays as its hard total.</p>
     <div class="strategy-wrap"><table class="strategy" id="tblPairs"></table></div>
+
+    <h3 style="font-size:.95rem;">Index plays (the Illustrious 18)</h3>
+    <p class="table-caption"><span style="color:var(--brass-bright); font-weight:700;">Gold</span> = deviate at true count ≥ index. <span style="color:var(--idx-blue); font-weight:700;">Blue</span> = deviate at true count ≤ index. Toggle <strong>Index Plays</strong> on the Play tab to have the hint bar call these out.</p>
+    <div class="strategy-wrap">
+      <table class="idx" id="tblIndex"></table>
+    </div>
   </main>
 
   <!-- ================= PLAY ================= -->
@@ -462,9 +494,15 @@
 
     <div class="hint-bar">
       <span>Suggested move: <span class="suggestion" id="hintText">—</span></span>
+    </div>
+    <div class="hint-toggles">
       <label class="toggle-inline">
         Hints
         <span class="switch on" id="hintSwitch" role="switch" aria-checked="true" tabindex="0"></span>
+      </label>
+      <label class="toggle-inline">
+        Index Plays
+        <span class="switch" id="devSwitch" role="switch" aria-checked="false" tabindex="0"></span>
       </label>
     </div>
 
@@ -509,6 +547,7 @@
     <div id="insurancePanel" hidden>
       <div class="insurance-box">
         <p>Dealer shows an ace. Take insurance for half your bet? It pays 2:1 if the dealer has blackjack.</p>
+        <p class="insurance-hint" id="insuranceHint"></p>
         <div class="action-bar">
           <button class="btn" id="btnInsureNo">No, decline</button>
           <button class="btn primary" id="btnInsureYes">Insure</button>
@@ -696,7 +735,7 @@
     if(total<=8) return 'H';
     if(total===9) return (canDouble && ['3','4','5','6'].includes(dk)) ? 'D' : 'H';
     if(total===10) return (canDouble && ['2','3','4','5','6','7','8','9'].includes(dk)) ? 'D' : 'H';
-    if(total===11) return canDouble ? 'D' : 'H';
+    if(total===11) return (dk==='A') ? 'H' : (canDouble ? 'D' : 'H');
     if(total===12) return ['4','5','6'].includes(dk) ? 'S' : 'H';
     if(total>=13 && total<=16) return ['2','3','4','5','6'].includes(dk) ? 'S' : 'H';
     return 'S';
@@ -745,6 +784,57 @@
   const ACTION_LABEL = {H:'Hit', S:'Stand', D:'Double', P:'Split'};
 
   /* ============================================================
+     INDEX PLAYS (Illustrious 18, Hi-Lo, 6-deck S17)
+     dir 'gte': deviate when true count >= index
+     dir 'lte': deviate when true count <= index (reverse plays)
+  ============================================================ */
+  const DEVIATIONS = [
+    {total:16, dk:'10', dir:'gte', index:0,  action:'S'},
+    {total:15, dk:'10', dir:'gte', index:4,  action:'S'},
+    {pair:'10', dk:'5', dir:'gte', index:5,  action:'P'},
+    {pair:'10', dk:'6', dir:'gte', index:4,  action:'P'},
+    {total:10, dk:'10', dir:'gte', index:4,  action:'D'},
+    {total:12, dk:'3',  dir:'gte', index:2,  action:'S'},
+    {total:12, dk:'2',  dir:'gte', index:3,  action:'S'},
+    {total:11, dk:'A',  dir:'gte', index:1,  action:'D'},
+    {total:9,  dk:'2',  dir:'gte', index:1,  action:'D'},
+    {total:10, dk:'A',  dir:'gte', index:4,  action:'D'},
+    {total:9,  dk:'7',  dir:'gte', index:3,  action:'D'},
+    {total:16, dk:'9',  dir:'gte', index:5,  action:'S'},
+    {total:13, dk:'2',  dir:'lte', index:-1, action:'H'},
+    {total:12, dk:'4',  dir:'lte', index:0,  action:'H'},
+    {total:12, dk:'5',  dir:'lte', index:-2, action:'H'},
+    {total:12, dk:'6',  dir:'lte', index:-1, action:'H'},
+    {total:13, dk:'3',  dir:'lte', index:-2, action:'H'},
+  ];
+  const INSURANCE_INDEX = 3; // take insurance at true count >= +3
+
+  function deviationMatches(dev, tc){
+    return dev.dir==='gte' ? tc>=dev.index : tc<=dev.index;
+  }
+  // Returns the deviated action, or null if no index play applies (fall back to basic strategy).
+  function deviationAction(hand, dealerCard, tc, canDouble, canSplit){
+    const dk = dealerKey(dealerCard);
+    const cards = hand.cards;
+    if(cards.length===2){
+      const v0=rankValue(cards[0].rank), v1=rankValue(cards[1].rank);
+      if(v0===10 && v1===10 && canSplit){
+        const d = DEVIATIONS.find(x=>x.pair==='10' && x.dk===dk);
+        if(d && deviationMatches(d, tc)) return d.action;
+      }
+    }
+    const {total, soft} = handValue(cards);
+    if(soft) return null; // Illustrious 18 entries here are all hard-total plays
+    for(const d of DEVIATIONS){
+      if(d.total!==total || d.dk!==dk) continue;
+      if(d.action==='D' && !canDouble) continue;
+      if(!deviationMatches(d, tc)) continue;
+      return d.action;
+    }
+    return null;
+  }
+
+  /* ============================================================
      PERSISTENCE
   ============================================================ */
   const STORE_KEY = 'countroom_save_v1';
@@ -777,6 +867,7 @@
     runningCount: 0,
     showCount: false,
     hintsOn: true,
+    devPlaysOn: false,
     pendingBet: 0,
     phase: 'betting', // betting | insurance | player | dealer | done
     playerHands: [],
@@ -880,6 +971,21 @@
     (row,dk)=> pairAction(row.key, dk) || (row.key==='10' ? 'S' : (row.key==='5' ? hardAction(10,dk,true) : 'H'))
   );
 
+  (function buildIndexTable(){
+    const el = $('tblIndex');
+    let html = '<thead><tr><th>Hand</th><th>vs</th><th>Play</th><th>True Count</th></tr></thead><tbody>';
+    for(const d of DEVIATIONS){
+      const handLabel = d.pair ? `${d.pair},${d.pair}` : d.total;
+      const sign = d.index>0 ? '+'+d.index : d.index;
+      const cmp = d.dir==='gte' ? '≥' : '≤';
+      html += `<tr><td>${handLabel}</td><td>${d.dk}</td><td>${ACTION_LABEL[d.action]}</td>` +
+        `<td class="idx-num dir-${d.dir}">${cmp} ${sign}</td></tr>`;
+    }
+    html += `<tr><td>Insurance</td><td>A</td><td>Take</td><td class="idx-num dir-gte">≥ +${INSURANCE_INDEX}</td></tr>`;
+    html += '</tbody>';
+    el.innerHTML = html;
+  })();
+
   /* ============================================================
      CARD RENDERING
   ============================================================ */
@@ -950,14 +1056,21 @@
   }
 
   function currentHint(){
-    if(!game.hintsOn || game.phase!=='player') { hintTextEl.textContent = '—'; return; }
+    if(!game.hintsOn || game.phase!=='player') { hintTextEl.innerHTML = '—'; return; }
     const hand = activeHand();
-    if(!hand){ hintTextEl.textContent = '—'; return; }
+    if(!hand){ hintTextEl.innerHTML = '—'; return; }
     const canDouble = hand.cards.length===2 && !hand.isSplitAces && game.bankroll>=hand.bet;
     const canSplit = hand.cards.length===2 && !hand.splitUsed && game.playerHands.length===1 &&
       rankValue(hand.cards[0].rank)===rankValue(hand.cards[1].rank) && game.bankroll>=hand.bet;
-    const a = recommend(hand, game.dealer.cards[0], canDouble, canSplit);
-    hintTextEl.textContent = ACTION_LABEL[a] + (a==='D' && !canDouble ? ' (Hit)' : '');
+
+    let a = recommend(hand, game.dealer.cards[0], canDouble, canSplit);
+    let isDeviation = false;
+    if(game.devPlaysOn){
+      const dev = deviationAction(hand, game.dealer.cards[0], trueCount(), canDouble, canSplit);
+      if(dev && dev!==a){ a = dev; isDeviation = true; }
+    }
+    hintTextEl.innerHTML = ACTION_LABEL[a] + (a==='D' && !canDouble ? ' (Hit)' : '') +
+      (isDeviation ? '<span class="idx-tag">count play</span>' : '');
   }
 
   function renderActionButtons(){
@@ -1038,9 +1151,21 @@
     if(dUp.rank==='A'){
       game.phase = 'insurance';
       renderAll();
+      renderInsuranceHint();
       return;
     }
     resolvePeekOrContinue();
+  }
+
+  function renderInsuranceHint(){
+    const el = $('insuranceHint');
+    if(!el) return;
+    if(!game.hintsOn){ el.textContent = ''; return; }
+    if(!game.devPlaysOn){ el.textContent = 'Basic strategy: always decline.'; return; }
+    const tc = trueCount();
+    el.textContent = tc>=INSURANCE_INDEX
+      ? `Count play: true count is ${tc.toFixed(1)} (≥ +${INSURANCE_INDEX}) — take it.`
+      : `True count is ${tc.toFixed(1)}, below +${INSURANCE_INDEX} — still decline.`;
   }
 
   $('btnInsureYes').addEventListener('click', ()=>{
@@ -1220,6 +1345,18 @@
     hintSwitch.classList.toggle('on', game.hintsOn);
     hintSwitch.setAttribute('aria-checked', String(game.hintsOn));
     currentHint();
+    renderInsuranceHint();
+  }
+
+  const devSwitch = $('devSwitch');
+  devSwitch.addEventListener('click', toggleDevPlays);
+  devSwitch.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleDevPlays(); } });
+  function toggleDevPlays(){
+    game.devPlaysOn = !game.devPlaysOn;
+    devSwitch.classList.toggle('on', game.devPlaysOn);
+    devSwitch.setAttribute('aria-checked', String(game.devPlaysOn));
+    currentHint();
+    renderInsuranceHint();
   }
 
   /* ============================================================
