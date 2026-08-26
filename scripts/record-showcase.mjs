@@ -14,7 +14,7 @@ function startServer() {
     const server = createServer(async (req, res) => {
       try {
         const file = await readFile(path.join(root, 'index.html'));
-        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(file);
       } catch {
         res.writeHead(404);
