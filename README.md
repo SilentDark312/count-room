@@ -1,6 +1,6 @@
 # The Count Room
 
-A mobile-friendly blackjack table that teaches the rules, basic strategy, and Hi-Lo card counting — playable straight from a browser, no install.
+A mobile-friendly blackjack table that teaches the rules, basic strategy, and Hi-Lo card counting — playable straight from a browser, or add it to your home screen for a full-screen app icon.
 
 **Play it live:** https://silentdark312.github.io/count-room/
 

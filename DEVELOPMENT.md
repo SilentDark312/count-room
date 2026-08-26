@@ -124,6 +124,25 @@ should be checked:
    Install everything you need for a session in **one** `npm install a b c --no-save`
    call, not several separate ones.
 
+## PWA install assets (manifest + icons)
+
+`manifest.json` and `icons/` make "Add to Home Screen" install a real app icon in
+standalone mode instead of a generic bookmark. The icons are generated, not
+hand-drawn files: `scripts/icon-src.html` draws one spade mark with CSS in
+viewport-relative units, and `.github/workflows/generate-icons.yml` runs
+`scripts/generate-icons.mjs` (Playwright, same reasoning as the showcase pipeline —
+no real browser locally) to screenshot it at each required size/variant, then commits
+the PNGs to `icons/`. Reruns automatically when `scripts/icon-src.html` changes, or:
+
+```
+gh workflow run generate-icons.yml --repo SilentDark312/count-room
+```
+
+To change the icon design, edit `scripts/icon-src.html` (it takes `?safe=1` for the
+maskable variant's smaller safe-zone content, and `?solid=1` for the apple-touch-icon's
+flat non-gradient background) and let the workflow regenerate the PNGs — don't hand-edit
+files under `icons/`, they'll just be overwritten next run.
+
 ## CI showcase pipeline
 
 `.github/workflows/showcase.yml` runs a scripted Playwright walkthrough
