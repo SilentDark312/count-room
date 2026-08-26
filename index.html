@@ -1,4 +1,9 @@
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#081f19">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>The Count Room</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
@@ -39,11 +44,14 @@
      class's author-stylesheet rule beats the UA stylesheet's [hidden] rule
      on specificity alone and the element stays visible. */
   [hidden]{display:none !important;}
+  html{ -webkit-text-size-adjust:100%; }
   body{
     background:var(--felt-deep);
     color:var(--cream);
     font-family:'Archivo', system-ui, sans-serif;
     -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:contain;
+    -webkit-tap-highlight-color:transparent;
   }
   h1,h2,h3{
     font-family:'Fraunces', Georgia, 'Times New Roman', serif;
@@ -57,11 +65,13 @@
   .mono{font-family:'IBM Plex Mono','Courier New',monospace;font-variant-numeric:tabular-nums;}
   ::selection{background:var(--brass);color:var(--ink);}
   :focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  button, select, input, a, [role="switch"]{touch-action:manipulation;}
 
   .app-shell{
     max-width:480px;
     margin:0 auto;
     min-height:100vh;
+    min-height:100dvh; /* real viewport height on mobile browsers whose UI chrome shows/hides */
     display:flex;
     flex-direction:column;
     background:
@@ -76,7 +86,7 @@
     position:sticky; top:0; z-index:5;
     display:flex; align-items:center; justify-content:space-between;
     gap:.6rem;
-    padding:.7rem .9rem;
+    padding:calc(.7rem + env(safe-area-inset-top)) .9rem .7rem;
     background:linear-gradient(180deg, var(--felt-deep), rgba(8,31,25,.94));
     border-bottom:1px solid var(--panel-border);
     backdrop-filter:blur(2px);
@@ -241,7 +251,10 @@
     padding:.05rem .4rem; margin-left:.4rem;
   }
   .hint-toggles{display:flex; justify-content:flex-end; gap:1rem; margin-bottom:.7rem;}
-  .toggle-inline{display:flex; align-items:center; gap:.4rem; font-size:.75rem; color:var(--cream-dim); white-space:nowrap;}
+  .toggle-inline{
+    display:flex; align-items:center; gap:.4rem; font-size:.75rem; color:var(--cream-dim); white-space:nowrap;
+    cursor:pointer; padding:.35rem .1rem; margin:-.35rem -.1rem; /* widen the tap target past the tiny switch itself */
+  }
   .insurance-hint{font-size:.78rem; color:var(--idx-blue); margin:-.3rem 0 .7rem;}
   .switch{
     width:34px; height:19px; border-radius:99px; background:rgba(244,236,216,.18);
@@ -268,6 +281,7 @@
     width:54px; height:54px; border-radius:50%; display:flex; align-items:center; justify-content:center;
     font-family:'IBM Plex Mono'; font-weight:700; font-size:.85rem; cursor:pointer;
     border:2px dashed rgba(244,236,216,.45); background:rgba(0,0,0,.2); color:var(--cream);
+    touch-action:manipulation; -webkit-tap-highlight-color:transparent;
   }
   .chip.c1{border-color:rgba(244,236,216,.6);}
   .chip.c5{border-color:var(--lose); color:var(--lose);}
@@ -366,6 +380,7 @@
     position:sticky; bottom:0; z-index:5;
     display:flex; background:linear-gradient(0deg, var(--felt-deep), rgba(8,31,25,.94));
     border-top:1px solid var(--panel-border);
+    padding-bottom:env(safe-area-inset-bottom);
   }
   .tab-btn{
     flex:1; display:flex; flex-direction:column; align-items:center; gap:.2rem;
@@ -578,7 +593,7 @@
       <span>Suggested move: <span class="suggestion" id="hintText">—</span></span>
     </div>
     <div class="hint-toggles">
-      <label class="toggle-inline">
+      <label class="toggle-inline" id="hintsRow">
         Hints
         <span class="switch on" id="hintSwitch" role="switch" aria-checked="true" tabindex="0"></span>
       </label>
@@ -1681,7 +1696,7 @@
     renderAll();
   });
 
-  hintSwitch.addEventListener('click', toggleHints);
+  $('hintsRow').addEventListener('click', toggleHints); // whole row is the tap target, not just the tiny switch
   hintSwitch.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleHints(); } });
   function toggleHints(){
     game.hintsOn = !game.hintsOn;
@@ -1692,7 +1707,7 @@
   }
 
   const devSwitch = $('devSwitch');
-  devSwitch.addEventListener('click', toggleDevPlays);
+  $('devPlaysRow').addEventListener('click', toggleDevPlays); // whole row is the tap target
   devSwitch.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleDevPlays(); } });
   function toggleDevPlays(){
     game.devPlaysOn = !game.devPlaysOn;
