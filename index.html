@@ -270,6 +270,7 @@
   .chip.c100{border-color:var(--brass-bright); color:var(--brass-bright);}
   .chip:active{transform:scale(.94);}
 
+  .shoe-select{max-width:220px; margin:0 auto 1rem;}
   .bet-readout{text-align:center; margin-bottom:.4rem;}
   .bet-readout .amt{font-family:'IBM Plex Mono'; font-size:1.6rem; font-weight:700; color:var(--brass-bright);}
   .bet-readout .lbl{font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; color:var(--cream-dim);}
@@ -439,7 +440,7 @@
         <div class="hilo-chip mid"><div class="cards">7 – 9</div><div class="tag">0</div></div>
         <div class="hilo-chip high"><div class="cards">10 – A</div><div class="tag">−1</div></div>
       </div>
-      <p>That's your <strong>running count</strong>. Because it means something different in a fresh 6-deck shoe than with half a deck left, divide it by the decks remaining to get the <strong>true count</strong> — the number that actually tells you how rich the remaining cards are. A rising true count is your cue to bet more and, at the more advanced level, deviate from basic strategy on a handful of close decisions.</p>
+      <p>That's your <strong>running count</strong>. Because it means something different in a fresh multi-deck shoe than with half a deck left, divide it by the decks remaining to get the <strong>true count</strong> — the number that actually tells you how rich the remaining cards are. A rising true count is your cue to bet more and, at the more advanced level, deviate from basic strategy on a handful of close decisions. Fewer decks in the shoe means the count swings further per card, so it also means bigger edges, and bigger risk — the Play tab lets you set the shoe from 2 to 8 decks to feel the difference.</p>
       <div class="callout">
         <div class="head">Is this legal?</div>
         Counting cards is mental math — no device, no marked cards, nothing hidden. It's legal. It's also unwelcome: casinos are private businesses and can bar a player they suspect of it. Practice here first; the Play and Trainer tabs let you build the skill without a bankroll on the line.
@@ -462,7 +463,7 @@
   <main class="screen" id="screen-strategy" hidden>
     <div class="eyebrow">Reference</div>
     <h2>Basic strategy chart</h2>
-    <p class="table-caption">6-deck shoe · dealer stands on all 17s · one split per hand, no double after splitting — matched to the rules used on the Play tab.</p>
+    <p class="table-caption">Dealer stands on all 17s · one split per hand, no double after splitting — matched to the rules used on the Play tab. These plays are the standard multi-deck (2–8 deck) chart; real optimal play shifts by at most a card here or there as the shoe gets smaller, so the same chart is used no matter which shoe size you pick.</p>
 
     <div class="legend">
       <div class="item"><span class="swatch H"></span>Hit</div>
@@ -483,7 +484,7 @@
     <div class="strategy-wrap"><table class="strategy" id="tblPairs"></table></div>
 
     <h3 style="font-size:.95rem;">Index plays (the Illustrious 18)</h3>
-    <p class="table-caption"><span style="color:var(--brass-bright); font-weight:700;">Gold</span> = deviate at true count ≥ index. <span style="color:var(--idx-blue); font-weight:700;">Blue</span> = deviate at true count ≤ index. Toggle <strong>Index Plays</strong> on the Play tab to have the hint bar call these out.</p>
+    <p class="table-caption"><span style="color:var(--brass-bright); font-weight:700;">Gold</span> = deviate at true count ≥ index. <span style="color:var(--idx-blue); font-weight:700;">Blue</span> = deviate at true count ≤ index. Toggle <strong>Index Plays</strong> on the Play tab to have the hint bar call these out. These are the standard multi-deck indices; real index numbers shift a point or two at smaller shoe sizes, but this table is used as-is at every shoe size offered here.</p>
     <div class="strategy-wrap">
       <table class="idx" id="tblIndex"></table>
     </div>
@@ -527,6 +528,16 @@
 
     <!-- betting phase -->
     <div id="bettingPanel">
+      <div class="field shoe-select">
+        <label for="deckSelect">Shoe Size</label>
+        <select id="deckSelect">
+          <option value="2">2 decks</option>
+          <option value="3">3 decks</option>
+          <option value="4">4 decks</option>
+          <option value="6" selected>6 decks</option>
+          <option value="8">8 decks</option>
+        </select>
+      </div>
       <div class="bet-readout">
         <div class="amt mono" id="betAmt">$0</div>
         <div class="lbl">Current Bet</div>
@@ -725,7 +736,7 @@
   }
 
   /* ============================================================
-     BASIC STRATEGY (6-deck, S17, no DAS, 1 split per hand)
+     BASIC STRATEGY (multi-deck, S17, no DAS, 1 split per hand)
   ============================================================ */
   function dealerKey(card){
     if(card.rank==='A') return 'A';
@@ -784,7 +795,7 @@
   const ACTION_LABEL = {H:'Hit', S:'Stand', D:'Double', P:'Split'};
 
   /* ============================================================
-     INDEX PLAYS (Illustrious 18, Hi-Lo, 6-deck S17)
+     INDEX PLAYS (Illustrious 18, Hi-Lo, standard multi-deck S17)
      dir 'gte': deviate when true count >= index
      dir 'lte': deviate when true count <= index (reverse plays)
   ============================================================ */
@@ -849,6 +860,7 @@
     try{
       localStorage.setItem(STORE_KEY, JSON.stringify({
         bankroll: game.bankroll,
+        numDecks: game.numDecks,
         stats: game.stats
       }));
     }catch(e){}
@@ -858,11 +870,12 @@
   /* ============================================================
      GAME STATE (Play tab)
   ============================================================ */
-  const NUM_DECKS = 6;
-  const PENETRATION_CARDS = 52 * 1.5;
+  const VALID_DECK_COUNTS = [2,3,4,6,8];
+  const DEFAULT_DECKS = 6;
 
   const game = {
     bankroll: saved && typeof saved.bankroll==='number' ? saved.bankroll : 1000,
+    numDecks: saved && VALID_DECK_COUNTS.includes(saved.numDecks) ? saved.numDecks : DEFAULT_DECKS,
     shoe: [],
     runningCount: 0,
     showCount: false,
@@ -880,21 +893,28 @@
     }
   };
 
+  // Reshuffle once fewer than a quarter of the shoe remains (matches the
+  // classic "6 decks, cut at 1.5 decks" convention, scaled to any shoe size).
+  function penetrationCards(){ return game.numDecks * 52 * 0.25; }
+
   function decksRemaining(){ return game.shoe.length/52; }
   function trueCount(){
     const dr = Math.max(decksRemaining(), 0.25);
     return game.runningCount / dr;
   }
   function ensureShoe(){
-    if(!game.shoe.length || game.shoe.length < PENETRATION_CARDS){
-      game.shoe = buildDecks(NUM_DECKS);
+    // Never start a round without enough of a buffer to cover a worst-case
+    // round (splits + hits + dealer draws) without an awkward mid-round reshuffle.
+    const minBuffer = Math.max(penetrationCards(), 30);
+    if(!game.shoe.length || game.shoe.length < minBuffer){
+      game.shoe = buildDecks(game.numDecks);
       game.runningCount = 0;
       return true;
     }
     return false;
   }
   function drawCard(){
-    if(game.shoe.length < 20) { game.shoe = buildDecks(NUM_DECKS); game.runningCount = 0; }
+    if(game.shoe.length < 12) { game.shoe = buildDecks(game.numDecks); game.runningCount = 0; }
     return game.shoe.pop();
   }
   function countCard(card){
@@ -1120,6 +1140,16 @@
   });
 
   $('btnDeal').addEventListener('click', startRound);
+
+  $('deckSelect').addEventListener('change', e=>{
+    const n = parseInt(e.target.value,10);
+    if(!VALID_DECK_COUNTS.includes(n)) return;
+    game.numDecks = n;
+    game.shoe = [];          // force a fresh shoe of the new size on the next Deal
+    game.runningCount = 0;
+    saveState();
+    renderShoeInfo();
+  });
 
   function startRound(){
     if(game.pendingBet<=0 || game.pendingBet>game.bankroll) return;
@@ -1517,6 +1547,7 @@
   /* ============================================================
      INIT
   ============================================================ */
+  $('deckSelect').value = String(game.numDecks);
   ensureShoe();
   drillStats();
   quizStats();
