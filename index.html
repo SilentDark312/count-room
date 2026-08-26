@@ -482,6 +482,46 @@
         Counters size their bets in "units" (say, one unit = your table minimum) and raise the unit count as the true count rises — a common beginner version is 1 unit at ≤+1, 2 at +2, 4 at +3, 6 at +4, 8 at +5 or more. Treat this as one illustration of the idea, not a precise formula — real bet sizing also depends on your bankroll and how much risk you can stomach.
       </div>
       <p>Notice the pattern: the count doesn't just tell you <em>whether</em> to bet more, it tells you <em>when</em> a specific basic-strategy decision is worth breaking. That's exactly what index plays are.</p>
+
+      <div class="callout" id="riskSimCard">
+        <div class="head">Try it: simulate your bankroll</div>
+        <p style="margin-bottom:.8rem;">Having an edge doesn't mean you can't lose — it means you're favored over a long run, and a real run has swings in both directions. Pick a bankroll and a bet spread, and run a batch of simulated sessions to see the actual spread of outcomes, not just the average.</p>
+        <div class="field-row">
+          <div class="field">
+            <label for="simBankroll">Starting bankroll ($)</label>
+            <input type="number" id="simBankroll" value="1000" min="10">
+          </div>
+          <div class="field">
+            <label for="simUnit">Unit size ($)</label>
+            <input type="number" id="simUnit" value="10" min="1">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="simSpread">Bet spread</label>
+            <select id="simSpread">
+              <option value="flat">Flat (1 unit always)</option>
+              <option value="ramp" selected>Ramped 1–8 units with the count</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="simHands">Hands per session</label>
+            <input type="number" id="simHands" value="500" min="10" max="5000">
+          </div>
+        </div>
+        <div class="action-bar">
+          <button class="btn primary wide" id="btnRunSim">Run 200 Simulated Sessions</button>
+        </div>
+        <div id="simResults" hidden>
+          <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+            <div class="box"><div class="n mono" id="simBustPct">—</div><div class="l">Went Bust</div></div>
+            <div class="box"><div class="n mono" id="simMedian">—</div><div class="l">Median Ending</div></div>
+            <div class="box"><div class="n mono" id="simP10">—</div><div class="l">Rough Worst 10%</div></div>
+          </div>
+          <svg id="simSparkline" viewBox="0 0 400 130" preserveAspectRatio="none" style="width:100%; height:130px; margin-top:.8rem; background:rgba(0,0,0,.15); border:1px solid var(--panel-border); border-radius:var(--radius-s);"></svg>
+          <p class="table-caption" style="margin-top:.5rem;">One representative session out of 200 (the one closest to the median outcome), shown above against your starting bankroll (dashed line). This is a simplified statistical model, not a full hand-by-hand blackjack simulation — it assumes roughly 1.1× your bet size of variance per hand and about a 0.5% edge per true-count point above zero, a common rule-of-thumb figure, minus a small baseline house edge at a neutral count. Real results depend on your exact rules, how precisely you play the deviations, and how disciplined your bet spread actually is.</p>
+        </div>
+      </div>
     </section>
 
     <section class="lesson">
@@ -492,6 +532,10 @@
       <div class="callout">
         <div class="head">Try it</div>
         Flip on <strong>Index Plays</strong> next to the hint toggle on the Play tab, and the suggestion will call out a count play whenever the true count crosses one of these thresholds — see the full table on the Strategy tab.
+      </div>
+      <div class="callout">
+        <div class="head">The real test: doing it yourself</div>
+        Hints are training wheels — the actual skill is tracking the count in your head <em>while</em> playing real hands, with nothing on screen to check yourself against. Switch to <strong>Count Drill</strong> mode on the Play tab for that: it hides the count and the index-play hint, and checks your running count against the real one before every deal.
       </div>
     </section>
   </main>
@@ -538,7 +582,7 @@
         Hints
         <span class="switch on" id="hintSwitch" role="switch" aria-checked="true" tabindex="0"></span>
       </label>
-      <label class="toggle-inline">
+      <label class="toggle-inline" id="devPlaysRow">
         Index Plays
         <span class="switch" id="devSwitch" role="switch" aria-checked="false" tabindex="0"></span>
       </label>
@@ -568,8 +612,18 @@
       <div class="segmented" style="margin-bottom:.6rem;">
         <button type="button" class="active" id="modeFree">Free Play</button>
         <button type="button" id="modeChallenge">Challenge</button>
+        <button type="button" id="modeDrill">Count Drill</button>
       </div>
       <p class="table-caption" id="challengeInfo" style="text-align:center;" hidden></p>
+      <p class="table-caption" id="drillModeInfo" style="text-align:center;" hidden></p>
+      <div class="field" id="countCheckRow" hidden style="margin-bottom:1rem;">
+        <label for="countCheckInput">What's your running count right now?</label>
+        <div class="guess-row">
+          <input type="number" id="countCheckInput" inputmode="numeric" placeholder="Running count">
+          <button class="btn primary" id="btnCountCheck">Check</button>
+        </div>
+        <p class="feedback-line" id="countCheckFeedback" style="margin:.4rem 0 0;"></p>
+      </div>
       <div class="field shoe-select">
         <label for="deckSelect">Shoe Size</label>
         <select id="deckSelect">
@@ -986,8 +1040,9 @@
 
   const game = {
     bankroll: saved && typeof saved.bankroll==='number' ? saved.bankroll : 1000,
-    mode: saved && saved.mode==='challenge' ? 'challenge' : 'free',
+    mode: saved && ['challenge','drill'].includes(saved.mode) ? saved.mode : 'free',
     savedFreeBankroll: saved && typeof saved.savedFreeBankroll==='number' ? saved.savedFreeBankroll : 1000,
+    drillCountChecked: false,
     numDecks: saved && VALID_DECK_COUNTS.includes(saved.numDecks) ? saved.numDecks : DEFAULT_DECKS,
     shoe: [],
     runningCount: 0,
@@ -1004,7 +1059,8 @@
       drillAttempts:0, drillExact:0, drillStreak:0, drillAbsErr:0,
       stratAttempts:0, stratCorrect:0, stratStreak:0,
       quizAttempts:0, quizCorrect:0, quizStreak:0,
-      challengeBest:0, challengeHands:0
+      challengeBest:0, challengeHands:0,
+      liveCountAttempts:0, liveCountExact:0, liveCountStreak:0
     }
   };
 
@@ -1047,15 +1103,25 @@
 
   function renderLedger(){
     bankrollVal.textContent = '$' + game.bankroll.toLocaleString('en-US');
-    if(game.showCount){
+    if(game.mode==='drill'){
+      countVal.classList.add('hidden-count');
+      countVal.textContent = '';
+      countVal.parentElement.title = "Locked during Count Drill — that's the point.";
+    } else if(game.showCount){
       countVal.classList.remove('hidden-count');
       countVal.textContent = `RC ${game.runningCount>=0?'+':''}${game.runningCount} · TC ${trueCount().toFixed(1)}`;
+      countVal.parentElement.title = '';
     } else {
       countVal.classList.add('hidden-count');
       countVal.textContent = '';
+      countVal.parentElement.title = '';
     }
   }
-  countToggle.addEventListener('click', ()=>{ game.showCount = !game.showCount; renderLedger(); });
+  countToggle.addEventListener('click', ()=>{
+    if(game.mode==='drill') return; // no peeking during the drill
+    game.showCount = !game.showCount;
+    renderLedger();
+  });
 
   /* ============================================================
      TABS
@@ -1221,7 +1287,7 @@
 
     let a = recommend(hand, game.dealer.cards[0], canDouble, canSplit, rules);
     let isDeviation = false;
-    if(game.devPlaysOn){
+    if(game.devPlaysOn && game.mode!=='drill'){
       const dev = deviationAction(hand, game.dealer.cards[0], trueCount(), canDouble, canSplit);
       if(dev && dev!==a){ a = dev; isDeviation = true; }
     }
@@ -1249,12 +1315,27 @@
   function updateModeUI(){
     $('modeFree').classList.toggle('active', game.mode==='free');
     $('modeChallenge').classList.toggle('active', game.mode==='challenge');
-    const info = $('challengeInfo');
+    $('modeDrill').classList.toggle('active', game.mode==='drill');
+
     const inChallenge = game.mode==='challenge';
-    info.hidden = !inChallenge;
+    const inDrill = game.mode==='drill';
+
+    const challengeInfo = $('challengeInfo');
+    challengeInfo.hidden = !inChallenge;
     if(inChallenge){
-      info.textContent = `Hands survived: ${game.stats.challengeHands||0} · Best: ${game.stats.challengeBest||0}`;
+      challengeInfo.textContent = `Hands survived: ${game.stats.challengeHands||0} · Best: ${game.stats.challengeBest||0}`;
     }
+
+    const drillInfo = $('drillModeInfo');
+    drillInfo.hidden = !inDrill;
+    if(inDrill){
+      const s = game.stats;
+      const acc = s.liveCountAttempts ? Math.round(100*(s.liveCountExact||0)/s.liveCountAttempts)+'%' : '—';
+      drillInfo.textContent = `Count checks: ${s.liveCountAttempts||0} · Exact: ${acc} · Streak: ${s.liveCountStreak||0}`;
+    }
+
+    $('countCheckRow').hidden = !inDrill;
+    $('devPlaysRow').hidden = inDrill;
     $('freeplayFootRow').hidden = inChallenge;
   }
 
@@ -1272,20 +1353,48 @@
   /* ============================================================
      PLAY: BETTING
   ============================================================ */
+  function updateDealButton(){
+    const needsCountCheck = game.mode==='drill' && !game.drillCountChecked;
+    $('btnDeal').disabled = game.pendingBet<=0 || needsCountCheck;
+  }
+
   document.querySelectorAll('.chip[data-value]').forEach(chip=>{
     chip.addEventListener('click', ()=>{
       const v = parseInt(chip.dataset.value,10);
       if(game.pendingBet + v <= game.bankroll){
         game.pendingBet += v;
         betAmtEl.textContent = '$' + game.pendingBet;
-        $('btnDeal').disabled = game.pendingBet<=0;
+        updateDealButton();
       }
     });
   });
   $('btnClearBet').addEventListener('click', ()=>{
     game.pendingBet = 0;
     betAmtEl.textContent = '$0';
-    $('btnDeal').disabled = true;
+    updateDealButton();
+  });
+
+  $('btnCountCheck').addEventListener('click', ()=>{
+    const raw = $('countCheckInput').value;
+    if(raw==='') return;
+    const guess = parseInt(raw,10);
+    const s = game.stats;
+    s.liveCountAttempts = (s.liveCountAttempts||0)+1;
+    const fb = $('countCheckFeedback');
+    if(guess===game.runningCount){
+      s.liveCountExact = (s.liveCountExact||0)+1;
+      s.liveCountStreak = (s.liveCountStreak||0)+1;
+      fb.className = 'feedback-line good';
+      fb.textContent = 'Correct.';
+    } else {
+      s.liveCountStreak = 0;
+      fb.className = 'feedback-line bad';
+      fb.textContent = `Actual running count was ${game.runningCount>=0?'+':''}${game.runningCount}.`;
+    }
+    game.drillCountChecked = true;
+    saveState();
+    updateModeUI();
+    updateDealButton();
   });
 
   $('btnDeal').addEventListener('click', startRound);
@@ -1342,7 +1451,7 @@
     const el = $('insuranceHint');
     if(!el) return;
     if(!game.hintsOn){ el.textContent = ''; return; }
-    if(!game.devPlaysOn){ el.textContent = 'Basic strategy: always decline.'; return; }
+    if(!game.devPlaysOn || game.mode==='drill'){ el.textContent = 'Basic strategy: always decline.'; return; }
     const tc = trueCount();
     el.textContent = tc>=INSURANCE_INDEX
       ? `Count play: true count is ${tc.toFixed(1)} (≥ +${INSURANCE_INDEX}) — take it.`
@@ -1517,7 +1626,12 @@
     resultAreaEl.innerHTML = '';
     shoeMsgEl.textContent = '';
     betAmtEl.textContent = '$0';
-    $('btnDeal').disabled = true;
+    if(game.mode==='drill'){
+      game.drillCountChecked = false;
+      $('countCheckInput').value = '';
+      $('countCheckFeedback').textContent = '';
+    }
+    updateDealButton();
     renderAll();
   });
 
@@ -1529,41 +1643,37 @@
     game.playerHands = [];
     resultAreaEl.innerHTML = '';
     betAmtEl.textContent = '$0';
-    $('btnDeal').disabled = true;
+    updateDealButton();
     saveState();
     renderAll();
   });
 
-  $('btnChallengeToFree').addEventListener('click', ()=> $('modeFree').click());
-
-  $('modeFree').addEventListener('click', ()=>{
-    if(game.mode==='free') return;
-    game.mode = 'free';
-    game.bankroll = game.savedFreeBankroll;
+  function switchMode(newMode){
+    if(game.mode===newMode) return;
+    if(game.mode==='free') game.savedFreeBankroll = game.bankroll;
+    game.mode = newMode;
+    game.bankroll = newMode==='challenge' ? CHALLENGE_STAKE : game.savedFreeBankroll;
+    if(newMode==='challenge') game.stats.challengeHands = 0;
+    if(newMode==='drill'){
+      game.devPlaysOn = false;
+      game.showCount = false;
+      game.drillCountChecked = false;
+    }
     game.phase = 'betting';
     game.dealer = {cards:[], holeRevealed:false};
     game.playerHands = [];
     resultAreaEl.innerHTML = '';
     betAmtEl.textContent = '$0';
-    $('btnDeal').disabled = true;
+    $('countCheckInput').value = '';
+    $('countCheckFeedback').textContent = '';
+    updateDealButton();
     saveState();
     renderAll();
-  });
-  $('modeChallenge').addEventListener('click', ()=>{
-    if(game.mode==='challenge') return;
-    game.savedFreeBankroll = game.bankroll;
-    game.mode = 'challenge';
-    game.bankroll = CHALLENGE_STAKE;
-    game.stats.challengeHands = 0;
-    game.phase = 'betting';
-    game.dealer = {cards:[], holeRevealed:false};
-    game.playerHands = [];
-    resultAreaEl.innerHTML = '';
-    betAmtEl.textContent = '$0';
-    $('btnDeal').disabled = true;
-    saveState();
-    renderAll();
-  });
+  }
+  $('btnChallengeToFree').addEventListener('click', ()=> switchMode('free'));
+  $('modeFree').addEventListener('click', ()=> switchMode('free'));
+  $('modeChallenge').addEventListener('click', ()=> switchMode('challenge'));
+  $('modeDrill').addEventListener('click', ()=> switchMode('drill'));
 
   $('btnResetBankroll').addEventListener('click', ()=>{
     game.bankroll = 1000;
@@ -1828,6 +1938,93 @@
   });
 
   /* ============================================================
+     LEARN: BANKROLL / RISK-OF-RUIN SIMULATOR
+     A simplified statistical model, not a hand-by-hand blackjack
+     simulation: each simulated hand draws a plausible true count, sizes
+     the bet from it, and samples an outcome from a normal distribution
+     whose mean reflects a ~0.5%-per-true-count edge and whose spread is
+     the commonly-cited ~1.1x-bet-size standard deviation of a blackjack
+     hand. Good for feeling the shape of variance; not a precise forecast.
+  ============================================================ */
+  const SIM_BASE_EDGE = -0.005;   // ~-0.5% baseline disadvantage at a neutral count
+  const SIM_EDGE_PER_TC = 0.005;  // ~+0.5% edge per true-count point above zero
+  const SIM_HAND_SD_MULT = 1.1;   // ~1.1x bet size standard deviation per hand
+  const SIM_TRIALS = 200;
+
+  function simSampleTrueCount(){
+    // Sum of three uniforms approximates a bell curve; scaled and clipped
+    // to a plausible true-count range for a mid-shoe moment.
+    let t = 0;
+    for(let i=0;i<3;i++) t += Math.random()*2-1;
+    return Math.max(-4, Math.min(7, (t/3)*4));
+  }
+  function simBetForTC(tc, spread, unit){
+    if(spread==='flat') return unit;
+    if(tc>=5) return unit*8;
+    if(tc>=4) return unit*6;
+    if(tc>=3) return unit*4;
+    if(tc>=2) return unit*2;
+    return unit;
+  }
+  function simRandNormal(mean, sd){
+    const u1 = Math.random() || 1e-9, u2 = Math.random();
+    const z = Math.sqrt(-2*Math.log(u1)) * Math.cos(2*Math.PI*u2);
+    return mean + z*sd;
+  }
+  function simulateSession(startBankroll, hands, spread, unit){
+    let bankroll = startBankroll;
+    const path = [bankroll];
+    let busted = false;
+    for(let h=0; h<hands; h++){
+      if(bankroll < unit){ busted = true; break; }
+      const tc = simSampleTrueCount();
+      const bet = Math.min(simBetForTC(tc, spread, unit), bankroll);
+      const edge = SIM_BASE_EDGE + SIM_EDGE_PER_TC * Math.max(tc, 0);
+      bankroll += simRandNormal(bet*edge, bet*SIM_HAND_SD_MULT);
+      if(bankroll <= 0){ bankroll = 0; busted = true; path.push(bankroll); break; }
+      path.push(bankroll);
+    }
+    return {finalBankroll: bankroll, busted, path};
+  }
+  function simDrawSparkline(path, startBankroll){
+    const svg = $('simSparkline');
+    const w = 400, h = 130, pad = 8;
+    const maxV = Math.max(...path, startBankroll) * 1.05 || 1;
+    const stepX = (w - 2*pad) / Math.max(path.length-1, 1);
+    const toY = v => (h-pad) - (v/maxV) * (h-2*pad);
+    const pts = path.map((v,i)=> `${(pad+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
+    const startY = toY(startBankroll).toFixed(1);
+    const last = pts.split(' ').slice(-1)[0].split(',');
+    svg.innerHTML = `
+      <line x1="${pad}" y1="${startY}" x2="${w-pad}" y2="${startY}" stroke="var(--cream-dim)" stroke-dasharray="3,3" stroke-width="1"/>
+      <polyline points="${pts}" fill="none" stroke="var(--brass-bright)" stroke-width="2"/>
+      <circle cx="${last[0]}" cy="${last[1]}" r="3.5" fill="var(--brass-bright)"/>
+    `;
+  }
+  function runBankrollSimulation(){
+    const startBankroll = Math.max(1, parseFloat($('simBankroll').value) || 1000);
+    const hands = Math.max(10, Math.min(5000, parseInt($('simHands').value,10) || 500));
+    const spread = $('simSpread').value;
+    const unit = Math.max(1, parseFloat($('simUnit').value) || 10);
+
+    const results = [];
+    for(let i=0;i<SIM_TRIALS;i++) results.push(simulateSession(startBankroll, hands, spread, unit));
+
+    const busts = results.filter(r=>r.busted).length;
+    const sorted = results.slice().sort((a,b)=>a.finalBankroll-b.finalBankroll);
+    const pctIndex = p => Math.floor(p*(sorted.length-1));
+    const median = sorted[pctIndex(0.5)];
+    const p10 = sorted[pctIndex(0.10)];
+
+    $('simBustPct').textContent = Math.round(100*busts/SIM_TRIALS)+'%';
+    $('simMedian').textContent = '$'+Math.round(median.finalBankroll).toLocaleString('en-US');
+    $('simP10').textContent = '$'+Math.round(p10.finalBankroll).toLocaleString('en-US');
+    simDrawSparkline(median.path, startBankroll);
+    $('simResults').hidden = false;
+  }
+  $('btnRunSim').addEventListener('click', runBankrollSimulation);
+
+  /* ============================================================
      INIT
   ============================================================ */
   $('deckSelect').value = String(game.numDecks);
@@ -1835,6 +2032,7 @@
   renderStrategyTables();
   drillStats();
   quizStats();
+  updateDealButton();
   renderAll();
 })();
 </script>

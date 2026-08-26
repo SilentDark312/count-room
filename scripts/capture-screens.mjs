@@ -48,6 +48,15 @@ async function main() {
   await page.waitForTimeout(300);
   await page.screenshot({ path: path.join(outDir, '01-learn-reading-the-count.png') });
 
+  // 1b. Learn tab, bankroll/risk-of-ruin simulator after running it
+  await page.evaluate(() => {
+    document.getElementById('riskSimCard')?.scrollIntoView({ block: 'start' });
+  });
+  await page.waitForTimeout(200);
+  await page.click('#btnRunSim');
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: path.join(outDir, '01b-learn-risk-simulator.png') });
+
   // 2. Trainer tab, Strategy Trainer segment
   await page.click('[data-tab="trainer"]');
   await page.click('#segStrategy');
@@ -92,6 +101,16 @@ async function main() {
   }
   await page.waitForTimeout(300);
   await page.screenshot({ path: path.join(outDir, '04-play-challenge-busted.png') });
+
+  // 5. Play tab, Count Drill mode -- before and after a count check
+  await page.click('#modeFree');
+  await page.click('#modeDrill');
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: path.join(outDir, '05-play-drill-before-check.png') });
+  await page.fill('#countCheckInput', '0');
+  await page.click('#btnCountCheck');
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: path.join(outDir, '05b-play-drill-after-check.png') });
 
   await browser.close();
   server.close();

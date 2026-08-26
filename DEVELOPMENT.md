@@ -54,12 +54,33 @@ used by the CI tooling that generates the README showcase, never by the app.
   deck count. This is a documented, deliberate approximation (see the Strategy tab
   caption and "Known simplifications" below), not an oversight.
 - **Game state**: one `game` object. Phase machine: `betting → insurance → player →
-  dealer → done → betting…`. `game.numDecks` drives `tableRules()` everywhere.
-- **Persistence**: `localStorage` key `countroom_save_v1` (bankroll, numDecks, stats
-  for the trainer drills). Nothing else is persisted; no backend/capabilities used.
-- **Trainer**: Speed Drill (cards flash on a timer, player enters their tracked
-  running count) and True Count Quiz (multiple choice on running-count ÷
-  decks-remaining arithmetic).
+  dealer → done → betting…` (plus `challengeOver`, entered from `finishRound()` when
+  `game.mode==='challenge'` and the bankroll can't cover the minimum bet). `game.mode`
+  is `'free' | 'challenge' | 'drill'`, switched via the single `switchMode()` function
+  — don't reintroduce separate per-mode click handlers, that duplication is exactly
+  what caused drift before it was consolidated. `game.numDecks` drives `tableRules()`
+  everywhere.
+- **Persistence**: `localStorage` key `countroom_save_v1` (bankroll, mode,
+  savedFreeBankroll, numDecks, stats for the trainer drills). Nothing else is
+  persisted; no backend/capabilities used.
+- **Trainer**: three drills, switched via a segmented control (`showTrainerPane()`).
+  Speed Drill (cards flash on a timer, player enters their tracked running count),
+  Strategy Trainer (one random hand + dealer upcard at a time via `drawStrategyScenario()`
+  using a throwaway single-deck draw — not tied to the real shoe/count state — checked
+  against the same rules-aware `recommend()` the Play tab uses), and True Count Quiz
+  (multiple choice on running-count ÷ decks-remaining arithmetic).
+- **Count Drill mode** (`game.mode==='drill'`): reuses the entire normal game engine,
+  but forces `showCount`/`devPlaysOn` off, locks the ledger's count reveal, hides the
+  Index Plays toggle, and requires a running-count guess (checked exactly against
+  `game.runningCount`, via `#countCheckRow`/`btnCountCheck`) before `updateDealButton()`
+  will enable Deal each round. This is the one mode meant to combine live counting with
+  real hand decisions — Speed Drill and the Strategy Trainer each isolate one skill.
+- **Bankroll simulator** (Learn tab, `runBankrollSimulation()`): a simplified
+  statistical model — not a hand-by-hand blackjack simulation — using a ~0.5%-edge-
+  per-true-count-point rule of thumb and a ~1.1x-bet-size per-hand standard deviation
+  (both commonly-cited approximations, not independently re-derived here). Runs 200
+  simulated sessions, reports bust rate / median / rough-worst-10% of ending bankrolls,
+  and draws one representative (median-outcome) session as an inline SVG sparkline.
 
 ## Known, deliberate simplifications (already documented in-app — don't "fix" without asking)
 
