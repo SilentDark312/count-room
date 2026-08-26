@@ -4,6 +4,8 @@ A mobile-friendly blackjack table that teaches the rules, basic strategy, and Hi
 
 **Play it live:** https://silentdark312.github.io/count-room/
 
+*Making changes to this project? Read [`DEVELOPMENT.md`](DEVELOPMENT.md) first — it covers the architecture, the deliberate simplifications, and how to test changes without a real browser.*
+
 ## Showcase
 
 ![Walkthrough of The Count Room: strategy chart, a hand of blackjack, and the card-counting trainer](docs/showcase.gif)
