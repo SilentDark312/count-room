@@ -13,8 +13,8 @@ A mobile-friendly blackjack table that teaches the rules, basic strategy, and Hi
 ## What's inside
 
 - **Learn** — how blackjack works, card values, your options each turn, the dealer's fixed rules, payouts, and why card counting works at all.
-- **Strategy** — full hard-total, soft-total, and pair charts, color-coded and matched to this game's exact rules.
-- **Play** — real blackjack against a 6-deck shoe with a play-money bankroll, an optional basic-strategy hint on every hand, and a toggle to reveal the running/true count as you play.
+- **Strategy** — full hard-total, soft-total, and pair charts, color-coded and matched to this game's exact rules, plus a reference table of the Illustrious 18 index plays.
+- **Play** — real blackjack against a 6-deck shoe with a play-money bankroll, an optional basic-strategy hint on every hand, a separate toggle for count-based index plays (the hint calls out a "count play" when the true count crosses a deviation's index), and a toggle to reveal the running/true count as you play.
 - **Trainer** — a speed drill that flashes cards for you to keep a running Hi-Lo count against, and a true-count quiz drilling the running-count ÷ decks-remaining arithmetic.
 
 ## Regenerating the showcase
