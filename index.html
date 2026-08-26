@@ -452,6 +452,34 @@
     </section>
 
     <section class="lesson">
+      <div class="eyebrow">Reading The Count</div>
+      <h2>The count says +2 — now what?</h2>
+      <p>The arithmetic is the easy part. The number only matters because of what it tells you: how the cards left in the shoe compare to a fresh deck.</p>
+      <div class="callout">
+        <div class="head">Worked example</div>
+        Say you're three decks into a 6-deck shoe, so 3 decks remain, and your running count is +6. True count = running count ÷ decks remaining = 6 ÷ 3 = <strong>+2</strong>. That means the undealt cards are mildly richer in tens and aces than a fresh shoe — a small real edge, not a huge one.
+      </div>
+      <p>As a rough feel for what a given true count means:</p>
+      <div class="hilo-strip">
+        <div class="hilo-chip mid"><div class="cards">≤ 0</div><div class="tag">Neutral</div></div>
+        <div class="hilo-chip low"><div class="cards">+1 to +2</div><div class="tag">Mild edge</div></div>
+        <div class="hilo-chip low"><div class="cards">+3 to +4</div><div class="tag">Good</div></div>
+        <div class="hilo-chip low"><div class="cards">+5 or more</div><div class="tag">Great</div></div>
+      </div>
+      <ul class="plain">
+        <li><strong>≤ 0</strong> — the shoe is neutral or worse for you. Bet the table minimum and play plain basic strategy.</li>
+        <li><strong>+1 to +2</strong> — a small edge. Basic strategy still covers almost every hand; maybe nudge your bet up a little.</li>
+        <li><strong>+3 to +4</strong> — a real edge. This is where it's worth raising your bet more, and where the first index plays kick in — insurance becomes correct at exactly +3.</li>
+        <li><strong>+5 and up</strong> — rare and strong. Bet big; most of the Illustrious 18 has triggered by now.</li>
+      </ul>
+      <div class="callout">
+        <div class="head">A simple bet ramp</div>
+        Counters size their bets in "units" (say, one unit = your table minimum) and raise the unit count as the true count rises — a common beginner version is 1 unit at ≤+1, 2 at +2, 4 at +3, 6 at +4, 8 at +5 or more. Treat this as one illustration of the idea, not a precise formula — real bet sizing also depends on your bankroll and how much risk you can stomach.
+      </div>
+      <p>Notice the pattern: the count doesn't just tell you <em>whether</em> to bet more, it tells you <em>when</em> a specific basic-strategy decision is worth breaking. That's exactly what index plays are.</p>
+    </section>
+
+    <section class="lesson">
       <div class="eyebrow">Going Further</div>
       <h2>Index plays: bending basic strategy to the count</h2>
       <p>Basic strategy answers "what's correct on average, across every possible shoe?" Once you're tracking a true count, you know the shoe in front of you isn't average anymore — and a handful of close decisions actually flip the other way at specific counts. These count-triggered exceptions are called <strong>index plays</strong>, and each one has an <strong>index number</strong>: the true count at which you switch off the basic-strategy play.</p>
@@ -532,6 +560,11 @@
 
     <!-- betting phase -->
     <div id="bettingPanel">
+      <div class="segmented" style="margin-bottom:.6rem;">
+        <button type="button" class="active" id="modeFree">Free Play</button>
+        <button type="button" id="modeChallenge">Challenge</button>
+      </div>
+      <p class="table-caption" id="challengeInfo" style="text-align:center;" hidden></p>
       <div class="field shoe-select">
         <label for="deckSelect">Shoe Size</label>
         <select id="deckSelect">
@@ -587,7 +620,19 @@
       <button class="btn primary wide" id="btnNextRound">Next Round</button>
     </div>
 
-    <div class="foot-row">
+    <!-- challenge mode: busted out -->
+    <div id="challengeOverPanel" hidden>
+      <div class="result-banner lose">Busted out</div>
+      <p style="text-align:center;">Survived <strong id="challengeFinalHands">0</strong> hand(s) this run. Best: <strong id="challengeBestDisplay">0</strong>.</p>
+      <div class="action-bar">
+        <button class="btn primary wide" id="btnChallengeRetry">Try Again</button>
+      </div>
+      <div class="foot-row">
+        <button class="link-btn" id="btnChallengeToFree">Back to Free Play instead</button>
+      </div>
+    </div>
+
+    <div class="foot-row" id="freeplayFootRow">
       <button class="link-btn" id="btnResetBankroll">Reset bankroll to $1,000</button>
     </div>
   </main>
@@ -599,6 +644,7 @@
 
     <div class="segmented">
       <button type="button" class="active" id="segSpeed">Speed Drill</button>
+      <button type="button" id="segStrategy">Strategy</button>
       <button type="button" id="segQuiz">True Count Quiz</button>
     </div>
 
@@ -649,6 +695,40 @@
         <div class="box"><div class="n mono" id="drillAttemptsN">0</div><div class="l">Attempts</div></div>
         <div class="box"><div class="n mono" id="drillAccN">—</div><div class="l">Exact %</div></div>
         <div class="box"><div class="n mono" id="drillStreakN">0</div><div class="l">Streak</div></div>
+      </div>
+    </div>
+
+    <!-- strategy trainer -->
+    <div id="stratPane" hidden>
+      <p style="font-size:.85rem; color:var(--cream-dim);">One hand at a time — pick the right move. No bankroll, just the decision.</p>
+      <p class="table-caption">Quizzing under: <strong id="stratRulesLabel"></strong> — set the shoe size on the Play tab to change it.</p>
+
+      <div class="table-zone">
+        <div class="zone-label"><span>Dealer Shows</span><span></span></div>
+        <div class="hand-row" id="stratDealerCard"></div>
+      </div>
+      <div class="table-zone">
+        <div class="zone-label"><span>Your Hand</span><span class="total mono" id="stratHandTotal"></span></div>
+        <div class="hand-row" id="stratPlayerCards"></div>
+      </div>
+
+      <div class="action-bar" id="stratActionBar">
+        <button class="btn" id="stratHit">Hit</button>
+        <button class="btn" id="stratStand">Stand</button>
+        <button class="btn" id="stratDouble">Double</button>
+        <button class="btn" id="stratSplit">Split</button>
+      </div>
+
+      <div class="feedback-line" id="stratFeedback"></div>
+
+      <div class="action-bar" id="stratNextRow" hidden>
+        <button class="btn primary wide" id="btnStratNext">Next Hand</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="box"><div class="n mono" id="stratAttemptsN">0</div><div class="l">Attempts</div></div>
+        <div class="box"><div class="n mono" id="stratAccN">—</div><div class="l">Accuracy</div></div>
+        <div class="box"><div class="n mono" id="stratStreakN">0</div><div class="l">Streak</div></div>
       </div>
     </div>
 
@@ -882,6 +962,8 @@
     try{
       localStorage.setItem(STORE_KEY, JSON.stringify({
         bankroll: game.bankroll,
+        mode: game.mode,
+        savedFreeBankroll: game.savedFreeBankroll,
         numDecks: game.numDecks,
         stats: game.stats
       }));
@@ -895,8 +977,12 @@
   const VALID_DECK_COUNTS = [1,2,3,4,6,8];
   const DEFAULT_DECKS = 6;
 
+  const CHALLENGE_STAKE = 500;
+
   const game = {
     bankroll: saved && typeof saved.bankroll==='number' ? saved.bankroll : 1000,
+    mode: saved && saved.mode==='challenge' ? 'challenge' : 'free',
+    savedFreeBankroll: saved && typeof saved.savedFreeBankroll==='number' ? saved.savedFreeBankroll : 1000,
     numDecks: saved && VALID_DECK_COUNTS.includes(saved.numDecks) ? saved.numDecks : DEFAULT_DECKS,
     shoe: [],
     runningCount: 0,
@@ -911,7 +997,9 @@
     insuranceBet: 0,
     stats: saved && saved.stats ? saved.stats : {
       drillAttempts:0, drillExact:0, drillStreak:0, drillAbsErr:0,
-      quizAttempts:0, quizCorrect:0, quizStreak:0
+      stratAttempts:0, stratCorrect:0, stratStreak:0,
+      quizAttempts:0, quizCorrect:0, quizStreak:0,
+      challengeBest:0, challengeHands:0
     }
   };
 
@@ -1062,6 +1150,7 @@
   const insurancePanel = $('insurancePanel');
   const actionPanel = $('actionPanel');
   const nextPanel = $('nextPanel');
+  const challengeOverPanel = $('challengeOverPanel');
   const betAmtEl = $('betAmt');
   const hintTextEl = $('hintText');
   const hintSwitch = $('hintSwitch');
@@ -1149,6 +1238,19 @@
     insurancePanel.hidden = game.phase!=='insurance';
     actionPanel.hidden = game.phase!=='player';
     nextPanel.hidden = game.phase!=='done';
+    challengeOverPanel.hidden = game.phase!=='challengeOver';
+  }
+
+  function updateModeUI(){
+    $('modeFree').classList.toggle('active', game.mode==='free');
+    $('modeChallenge').classList.toggle('active', game.mode==='challenge');
+    const info = $('challengeInfo');
+    const inChallenge = game.mode==='challenge';
+    info.hidden = !inChallenge;
+    if(inChallenge){
+      info.textContent = `Hands survived: ${game.stats.challengeHands||0} · Best: ${game.stats.challengeBest||0}`;
+    }
+    $('freeplayFootRow').hidden = inChallenge;
   }
 
   function renderAll(){
@@ -1159,6 +1261,7 @@
     currentHint();
     renderActionButtons();
     setPhaseUI();
+    updateModeUI();
   }
 
   /* ============================================================
@@ -1201,6 +1304,7 @@
     game.bankroll -= game.pendingBet;
     const bet = game.pendingBet;
     game.pendingBet = 0;
+    if(game.mode==='challenge') game.stats.challengeHands = (game.stats.challengeHands||0)+1;
     game.insuranceBet = 0;
     game.dealer = {cards: [], holeRevealed:false};
     game.playerHands = [{cards:[], bet, done:false, isSplitAces:false, splitUsed:false, result:null}];
@@ -1390,6 +1494,13 @@
     else if(wins>0 && losses>0){ bannerCls='push'; bannerText='Split result'; }
     resultAreaEl.innerHTML = `<div class="result-banner ${bannerCls}">${bannerText}</div>`;
 
+    if(game.mode==='challenge' && game.bankroll<5){
+      game.phase = 'challengeOver';
+      if(game.stats.challengeHands > (game.stats.challengeBest||0)) game.stats.challengeBest = game.stats.challengeHands;
+      $('challengeFinalHands').textContent = game.stats.challengeHands||0;
+      $('challengeBestDisplay').textContent = game.stats.challengeBest||0;
+    }
+
     saveState();
     renderAll();
   }
@@ -1402,6 +1513,50 @@
     shoeMsgEl.textContent = '';
     betAmtEl.textContent = '$0';
     $('btnDeal').disabled = true;
+    renderAll();
+  });
+
+  $('btnChallengeRetry').addEventListener('click', ()=>{
+    game.bankroll = CHALLENGE_STAKE;
+    game.stats.challengeHands = 0;
+    game.phase = 'betting';
+    game.dealer = {cards:[], holeRevealed:false};
+    game.playerHands = [];
+    resultAreaEl.innerHTML = '';
+    betAmtEl.textContent = '$0';
+    $('btnDeal').disabled = true;
+    saveState();
+    renderAll();
+  });
+
+  $('btnChallengeToFree').addEventListener('click', ()=> $('modeFree').click());
+
+  $('modeFree').addEventListener('click', ()=>{
+    if(game.mode==='free') return;
+    game.mode = 'free';
+    game.bankroll = game.savedFreeBankroll;
+    game.phase = 'betting';
+    game.dealer = {cards:[], holeRevealed:false};
+    game.playerHands = [];
+    resultAreaEl.innerHTML = '';
+    betAmtEl.textContent = '$0';
+    $('btnDeal').disabled = true;
+    saveState();
+    renderAll();
+  });
+  $('modeChallenge').addEventListener('click', ()=>{
+    if(game.mode==='challenge') return;
+    game.savedFreeBankroll = game.bankroll;
+    game.mode = 'challenge';
+    game.bankroll = CHALLENGE_STAKE;
+    game.stats.challengeHands = 0;
+    game.phase = 'betting';
+    game.dealer = {cards:[], holeRevealed:false};
+    game.playerHands = [];
+    resultAreaEl.innerHTML = '';
+    betAmtEl.textContent = '$0';
+    $('btnDeal').disabled = true;
+    saveState();
     renderAll();
   });
 
@@ -1573,17 +1728,97 @@
   $('btnQuizNext').addEventListener('click', newQuizQuestion);
 
   /* ============================================================
+     TRAINER: STRATEGY TRAINER
+     One random hand vs. one random dealer upcard at a time. Uses the
+     same rules-aware recommend() the Play tab's hint bar uses, under
+     whatever shoe size is currently selected there.
+  ============================================================ */
+  const strat = {cards:[], dealerCard:null, answered:false};
+  const STRAT_ACTIONS = ['H','S','D','P'];
+
+  function drawStrategyScenario(){
+    let c1, c2, dc, v;
+    do{
+      const deck = buildDecks(1);
+      c1 = deck.pop(); c2 = deck.pop(); dc = deck.pop();
+      v = handValue([c1,c2]);
+    } while(v.blackjack); // a natural has no decision to quiz
+    return {cards:[c1,c2], dealerCard:dc};
+  }
+
+  function newStrategyScenario(){
+    const s = drawStrategyScenario();
+    strat.cards = s.cards; strat.dealerCard = s.dealerCard; strat.answered = false;
+    renderStrategyScenario();
+  }
+
+  function renderStrategyScenario(){
+    $('stratRulesLabel').textContent = currentRules().label;
+    $('stratDealerCard').innerHTML = cardNode(strat.dealerCard, false);
+    $('stratPlayerCards').innerHTML = strat.cards.map(c=>cardNode(c,false)).join('');
+    const v = handValue(strat.cards);
+    $('stratHandTotal').textContent = v.soft ? ('Soft '+v.total) : v.total;
+    const isPair = rankValue(strat.cards[0].rank)===rankValue(strat.cards[1].rank);
+    $('stratSplit').style.display = isPair ? '' : 'none';
+    $('stratActionBar').hidden = false;
+    $('stratNextRow').hidden = true;
+    $('stratFeedback').textContent = '';
+    STRAT_ACTIONS.forEach(a=>{ const b=$('strat'+ACTION_LABEL[a]); if(b) b.disabled=false; });
+  }
+
+  function answerStrategy(action){
+    if(strat.answered || !strat.cards.length) return;
+    strat.answered = true;
+    const rules = currentRules();
+    const isPair = rankValue(strat.cards[0].rank)===rankValue(strat.cards[1].rank);
+    const correct = recommend({cards:strat.cards}, strat.dealerCard, true, isPair, rules);
+    const s = game.stats;
+    s.stratAttempts = (s.stratAttempts||0)+1;
+    if(action===correct){ s.stratCorrect=(s.stratCorrect||0)+1; s.stratStreak=(s.stratStreak||0)+1; }
+    else { s.stratStreak = 0; }
+    saveState();
+    strategyStats();
+    const fb = $('stratFeedback');
+    if(action===correct){ fb.className='feedback-line good'; fb.textContent = `Correct — ${ACTION_LABEL[correct]}.`; }
+    else { fb.className='feedback-line bad'; fb.textContent = `Not quite — correct play is ${ACTION_LABEL[correct]}, not ${ACTION_LABEL[action]}.`; }
+    STRAT_ACTIONS.forEach(a=>{ const b=$('strat'+ACTION_LABEL[a]); if(b) b.disabled=true; });
+    $('stratNextRow').hidden = false;
+  }
+
+  function strategyStats(){
+    const s = game.stats;
+    $('stratAttemptsN').textContent = s.stratAttempts||0;
+    $('stratAccN').textContent = s.stratAttempts ? Math.round(100*(s.stratCorrect||0)/s.stratAttempts)+'%' : '—';
+    $('stratStreakN').textContent = s.stratStreak||0;
+  }
+
+  $('stratHit').addEventListener('click', ()=>answerStrategy('H'));
+  $('stratStand').addEventListener('click', ()=>answerStrategy('S'));
+  $('stratDouble').addEventListener('click', ()=>answerStrategy('D'));
+  $('stratSplit').addEventListener('click', ()=>answerStrategy('P'));
+  $('btnStratNext').addEventListener('click', newStrategyScenario);
+
+  /* ============================================================
      TRAINER: SEGMENTED SWITCH
   ============================================================ */
   const drillPane = $('drillPane');
+  const stratPane = $('stratPane');
   const quizPane = $('quizPane');
-  $('segSpeed').addEventListener('click', ()=>{
-    $('segSpeed').classList.add('active'); $('segQuiz').classList.remove('active');
-    drillPane.hidden=false; quizPane.hidden=true;
+  const trainerPanes = {segSpeed:drillPane, segStrategy:stratPane, segQuiz:quizPane};
+  function showTrainerPane(activeId){
+    Object.entries(trainerPanes).forEach(([id, pane])=>{
+      $(id).classList.toggle('active', id===activeId);
+      pane.hidden = id!==activeId;
+    });
+  }
+  $('segSpeed').addEventListener('click', ()=> showTrainerPane('segSpeed'));
+  $('segStrategy').addEventListener('click', ()=>{
+    showTrainerPane('segStrategy');
+    if(!strat.cards.length) newStrategyScenario();
+    else renderStrategyScenario(); // refresh rules label in case shoe size changed elsewhere
   });
   $('segQuiz').addEventListener('click', ()=>{
-    $('segQuiz').classList.add('active'); $('segSpeed').classList.remove('active');
-    quizPane.hidden=false; drillPane.hidden=true;
+    showTrainerPane('segQuiz');
     if(!quizPrompt.dataset.started){ newQuizQuestion(); quizPrompt.dataset.started='1'; }
   });
 
