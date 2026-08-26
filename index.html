@@ -34,6 +34,11 @@
   }
 
   *{box-sizing:border-box;}
+  /* Guarantee [hidden] always wins over a class that sets its own `display`
+     (e.g. `.action-bar{display:flex}`) on the same element — otherwise the
+     class's author-stylesheet rule beats the UA stylesheet's [hidden] rule
+     on specificity alone and the element stays visible. */
+  [hidden]{display:none !important;}
   body{
     background:var(--felt-deep);
     color:var(--cream);

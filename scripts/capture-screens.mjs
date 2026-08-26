@@ -52,7 +52,20 @@ async function main() {
   await page.click('[data-tab="trainer"]');
   await page.click('#segStrategy');
   await page.waitForTimeout(300);
-  await page.screenshot({ path: path.join(outDir, '02-trainer-strategy.png') });
+  await page.screenshot({ path: path.join(outDir, '02-trainer-strategy-before-answer.png') });
+  await page.click('#stratStand');
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: path.join(outDir, '02a-trainer-strategy-after-answer.png') });
+
+  // 2b. Speed Drill mid-run (regression check: drillStopRow used to silently
+  // ignore [hidden] because of a class/attribute specificity clash)
+  await page.click('#segSpeed');
+  await page.click('#btnDrillStart');
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: path.join(outDir, '02b-trainer-speed-drill-running.png') });
+  await page.click('#btnDrillStop');
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: path.join(outDir, '02c-trainer-speed-drill-guess.png') });
 
   // 3. Play tab, Challenge mode just entered
   await page.click('[data-tab="play"]');
