@@ -131,6 +131,21 @@ node_modules/ffmpeg-static/ffmpeg -y -ss 5.3 -i docs/showcase.mp4 -vframes 1 fra
 `videos/`, `node_modules/`, and `package-lock.json` are gitignored — they're
 CI/local-only artifacts, never committed.
 
+## CI screenshot verification (for reviewing a specific change, not showcasing)
+
+The showcase walkthrough only visits what it's scripted to visit, so it won't show a
+new feature unless you update it. For quickly checking how a specific screen/state
+actually renders, use `.github/workflows/verify-screens.yml` instead — it runs
+`scripts/capture-screens.mjs` (edit this to capture whatever states you're checking)
+and uploads plain PNGs as a build artifact rather than committing anything:
+
+```
+gh workflow run verify-screens.yml --repo SilentDark312/count-room
+gh run watch <run-id> --repo SilentDark312/count-room --exit-status
+gh run download <run-id> --repo SilentDark312/count-room -n verify-screens -D verify-out
+# then Read the PNGs in verify-out/
+```
+
 ## Workflow for making a change
 
 1. Clone the repo fresh — don't assume any previous session's scratchpad copy of
