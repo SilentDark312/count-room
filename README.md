@@ -4,6 +4,8 @@ A mobile-friendly blackjack table that teaches the rules, basic strategy, and Hi
 
 **Play it live:** https://silentdark312.github.io/count-room/
 
+**Installable** — it's a proper web app: open the link, use your browser's "Add to Home Screen," and it launches full-screen with a real icon, no address bar. See [PWA install assets](DEVELOPMENT.md#pwa-install-assets-manifest--icons) in the dev notes for how the icon is generated.
+
 *Making changes to this project? Read [`DEVELOPMENT.md`](DEVELOPMENT.md) first — it covers the architecture, the deliberate simplifications, and how to test changes without a real browser.*
 
 ## Showcase
