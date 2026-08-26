@@ -103,7 +103,14 @@ async function main() {
   await page.screenshot({ path: path.join(outDir, '04-play-challenge-busted.png') });
 
   // 5. Play tab, Count Drill mode -- before and after a count check
-  await page.click('#modeFree');
+  // (step 4 may or may not have ended on the busted/challengeOver screen,
+  // where the mode buttons are hidden -- get back to a normal betting
+  // screen first, however step 4 left things)
+  if (await page.locator('#challengeOverPanel').isVisible()) {
+    await page.click('#btnChallengeToFree');
+  } else {
+    await page.click('#modeFree');
+  }
   await page.click('#modeDrill');
   await page.waitForTimeout(300);
   await page.screenshot({ path: path.join(outDir, '05-play-drill-before-check.png') });
