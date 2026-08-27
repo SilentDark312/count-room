@@ -61,8 +61,32 @@ used by the CI tooling that generates the README showcase, never by the app.
   what caused drift before it was consolidated. `game.numDecks` drives `tableRules()`
   everywhere.
 - **Persistence**: `localStorage` key `countroom_save_v1` (bankroll, mode,
-  savedFreeBankroll, numDecks, stats for the trainer drills). Nothing else is
+  savedFreeBankroll, numDecks, soundOn, stats for the trainer drills). Nothing else is
   persisted; no backend/capabilities used.
+- **Splitting/resplitting**: `canSplitFor(hand)` gates on `game.playerHands.length <
+  MAX_SPLIT_HANDS` (4), not on the hand itself. `hand.splitUsed` means "this hand came
+  from a split" (it gates double-after-split eligibility in `canDoubleFor`) — it does
+  **not** mean "already resplit," and must never be reused as a resplit gate; that
+  exact conflation was a real bug caught while adding resplitting; see below.
+- **Surrender**: `canSurrenderFor(hand)` (structural eligibility: unsplit, first
+  decision) and `surrenderRecommended(hand, dealerCard)` (the two textbook cells) are
+  separate, narrow lookups, checked directly in `currentHint()` and the `btnSurrender`
+  handler — not part of `recommend()`/`hardAction()`. Keep it that way; folding
+  surrender into the general strategy engine as a 5th action would touch every call
+  site that reads H/S/D/P (`buildTable`, `deviationAction`, the Strategy Trainer) for
+  a narrow, rarely-hit exception.
+- **Sound**: synthesized with the Web Audio API (`tone()`/`playSound()`) rather than
+  shipping audio files, gated on `game.soundOn` and a lazily-created `AudioContext`.
+  Every card dealt anywhere in the app goes through one `dealCard(hand, skipCount)`
+  helper (draws, counts unless `skipCount` — used only for the dealer's face-down
+  hole card, — pushes, plays the sound) rather than the repeated
+  `drawCard()+countCard()+push()` triplet that used to be at 8 separate call sites.
+  If you add a new place cards get dealt, use `dealCard()`, not the raw triplet.
+- **Progress dashboard** (`renderProgressSummary()`, Trainer tab): reads every stat
+  already tracked in `game.stats` into one card, called from each drill's own stats
+  function (`drillStats`/`strategyStats`/`quizStats`) plus whenever the Trainer tab is
+  opened (to pick up Challenge/Count Drill numbers, which change on the Play tab).
+  Adding a new trackable stat means adding it here too, not just in its own pane.
 - **Trainer**: three drills, switched via a segmented control (`showTrainerPane()`).
   Speed Drill (cards flash on a timer, player enters their tracked running count),
   Strategy Trainer (one random hand + dealer upcard at a time via `drawStrategyScenario()`
@@ -84,19 +108,32 @@ used by the CI tooling that generates the README showcase, never by the app.
 
 ## Known, deliberate simplifications (already documented in-app — don't "fix" without asking)
 
-- One split per hand, ever — no re-splitting.
-- Split aces get exactly one card each, then stand automatically.
+- Resplitting is allowed up to the standard 4-hand cap, but split aces still get
+  exactly one card each and stand automatically, with no resplitting them.
+- Late surrender exists, but only via a small standalone lookup covering the two
+  textbook cells (hard 16 vs 9/10/A, hard 15 vs 10) — see `surrenderRecommended()`.
+  It is deliberately not folded into `recommend()`/`hardAction()` as a full 5th
+  action; don't thread a general surrender case through the whole strategy engine
+  without a real reason to.
 - Blackjack always pays 3:2 — no 6:5 tables modeled.
 - Insurance/dealer-peek rules are constant across every deck count.
-- Illustrious 18 is one fixed table for all deck counts (see above).
-- No surrender.
+- Illustrious 18 is one fixed table for all deck counts (see above); it also doesn't
+  account for surrender-based deviations, since surrender itself is only the two
+  textbook cells above, not count-sensitive here.
 
-## A real bug that got fixed along the way (context if something double-related looks off)
+## Real bugs that got fixed along the way (context if something looks off)
 
-Double-after-split used to be silently allowed *regardless* of the posted "no DAS"
-rule, contradicting both the UI copy and the pair-strategy chart's own math. Fixed by
-`canDoubleFor(hand, rules)`, which now correctly gates it per the active ruleset. If
-you're debugging doubling behavior, that function is the one place it's decided.
+- Double-after-split used to be silently allowed *regardless* of the posted "no DAS"
+  rule, contradicting both the UI copy and the pair-strategy chart's own math. Fixed by
+  `canDoubleFor(hand, rules)`, which now correctly gates it per the active ruleset. If
+  you're debugging doubling behavior, that function is the one place it's decided.
+- While adding resplitting, `canSplitFor` originally also checked `!hand.splitUsed` —
+  harmless under the old single-split rule (redundant with `playerHands.length===1`),
+  but that flag actually means "this hand came from a split" (for DAS purposes), so
+  once the hand-count cap replaced the length check, the stale condition would have
+  silently blocked every resplit. Caught by a scripted 300-round jsdom stress test
+  before shipping, not by code review — worth re-running something similar if this
+  area changes again.
 
 ## Testing approach (there is no real browser in most Claude Code sandboxes)
 
