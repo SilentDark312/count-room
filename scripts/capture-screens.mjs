@@ -119,6 +119,35 @@ async function main() {
   await page.waitForTimeout(200);
   await page.screenshot({ path: path.join(outDir, '05b-play-drill-after-check.png') });
 
+  // 6. Free Play: hunt for a surrender opportunity and a resplit-in-progress
+  // state -- the two riskiest new UI states to leave visually unchecked.
+  await page.click('#modeFree');
+  await page.waitForTimeout(200);
+  let sawSurrender = false, sawResplit = false;
+  for (let i = 0; i < 400 && !(sawSurrender && sawResplit); i++) {
+    if (await page.locator('#bettingPanel').isVisible()) {
+      await page.click('.chip[data-value="25"]');
+      await page.click('#btnDeal');
+    }
+    if (await page.locator('#insurancePanel').isVisible()) await page.click('#btnInsureNo');
+    if (await page.locator('#actionPanel').isVisible()) {
+      if (!sawSurrender && await page.locator('#surrenderRow').isVisible()) {
+        sawSurrender = true;
+        await page.screenshot({ path: path.join(outDir, '06-play-surrender.png') });
+      }
+      const handCount = await page.locator('.hand-group').count();
+      if (!sawResplit && handCount >= 3) {
+        sawResplit = true;
+        await page.screenshot({ path: path.join(outDir, '06b-play-resplit.png') });
+      }
+      if (!(await page.locator('#btnSplit').isDisabled())) await page.click('#btnSplit');
+      else if (!(await page.locator('#btnStand').isDisabled())) await page.click('#btnStand');
+      else await page.click('#btnHit');
+    }
+    if (await page.locator('#nextPanel').isVisible()) await page.click('#btnNextRound');
+  }
+  console.log('saw surrender opportunity:', sawSurrender, '| saw 3+ hand resplit:', sawResplit);
+
   await browser.close();
   server.close();
   console.log('Screenshots written to verify/');
