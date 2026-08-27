@@ -103,38 +103,38 @@
     color:var(--brass-bright);
     white-space:nowrap;
   }
-  .ledger-readouts{display:flex; align-items:center; gap:.5rem;}
+  .ledger-readouts{display:flex; align-items:center; gap:.35rem;}
   .stat-pill{
     display:flex; flex-direction:column; align-items:flex-end;
-    padding:.25rem .55rem;
+    padding:.22rem .45rem;
     border:1px solid var(--panel-border);
     border-radius:var(--radius-s);
     background:rgba(0,0,0,.18);
-    min-width:64px;
+    min-width:52px;
   }
-  .stat-pill .lbl{font-size:.58rem; letter-spacing:.06em; text-transform:uppercase; color:var(--cream-dim);}
-  .stat-pill .val{font-size:.85rem; font-weight:600; color:var(--brass-bright);}
+  .stat-pill .lbl{font-size:.56rem; letter-spacing:.05em; text-transform:uppercase; color:var(--cream-dim); white-space:nowrap;}
+  .stat-pill .val{font-size:.82rem; font-weight:600; color:var(--brass-bright); white-space:nowrap;}
   .count-toggle{
     display:flex; flex-direction:column; align-items:flex-end;
-    padding:.25rem .55rem;
+    padding:.22rem .45rem;
     border:1px dashed var(--panel-border);
     border-radius:var(--radius-s);
     background:transparent;
     cursor:pointer;
-    min-width:64px;
+    min-width:52px;
     color:inherit;
     font:inherit;
   }
-  .count-toggle .lbl{font-size:.58rem; letter-spacing:.06em; text-transform:uppercase; color:var(--cream-dim);}
-  .count-toggle .val{font-size:.85rem; font-weight:600; color:var(--cream);}
+  .count-toggle .lbl{font-size:.56rem; letter-spacing:.05em; text-transform:uppercase; color:var(--cream-dim); white-space:nowrap;}
+  .count-toggle .val{font-size:.82rem; font-weight:600; color:var(--cream); white-space:nowrap;}
   .count-toggle .val.hidden-count::after{content:"tap to reveal";}
   .sound-toggle{
     display:flex; align-items:center; justify-content:center;
-    width:32px; height:32px; flex-shrink:0;
+    width:28px; height:28px; flex-shrink:0;
     border:1px solid var(--panel-border); border-radius:var(--radius-s);
     background:transparent; cursor:pointer; color:var(--cream-dim);
   }
-  .sound-toggle svg{width:17px; height:17px; stroke:currentColor; stroke-width:1.8; fill:currentColor; stroke-linecap:round; stroke-linejoin:round;}
+  .sound-toggle svg{width:15px; height:15px; stroke:currentColor; stroke-width:1.8; fill:currentColor; stroke-linecap:round; stroke-linejoin:round;}
   .sound-toggle svg path:first-child{fill:currentColor; stroke:none;}
   .sound-toggle svg .wave{fill:none; stroke:currentColor;}
   .sound-toggle.on{color:var(--brass-bright); border-color:var(--panel-border);}
