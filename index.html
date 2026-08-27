@@ -128,6 +128,17 @@
   .count-toggle .lbl{font-size:.58rem; letter-spacing:.06em; text-transform:uppercase; color:var(--cream-dim);}
   .count-toggle .val{font-size:.85rem; font-weight:600; color:var(--cream);}
   .count-toggle .val.hidden-count::after{content:"tap to reveal";}
+  .sound-toggle{
+    display:flex; align-items:center; justify-content:center;
+    width:32px; height:32px; flex-shrink:0;
+    border:1px solid var(--panel-border); border-radius:var(--radius-s);
+    background:transparent; cursor:pointer; color:var(--cream-dim);
+  }
+  .sound-toggle svg{width:17px; height:17px; stroke:currentColor; stroke-width:1.8; fill:currentColor; stroke-linecap:round; stroke-linejoin:round;}
+  .sound-toggle svg path:first-child{fill:currentColor; stroke:none;}
+  .sound-toggle svg .wave{fill:none; stroke:currentColor;}
+  .sound-toggle.on{color:var(--brass-bright); border-color:var(--panel-border);}
+  .sound-toggle:not(.on) .wave{display:none;}
   .count-toggle .val:not(.hidden-count){color:var(--brass-bright);}
 
   /* ---------- screens ---------- */
@@ -412,6 +423,9 @@
         <span class="lbl" id="countLbl">Count</span>
         <span class="val mono hidden-count" id="countVal"></span>
       </button>
+      <button type="button" class="sound-toggle on" id="soundToggle" aria-label="Toggle sound" aria-pressed="true">
+        <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5l5 3.8V5.7l-5 3.8H4z"/><path class="wave" d="M16.5 8.5a5 5 0 0 1 0 7"/><path class="wave" d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+      </button>
     </div>
   </header>
 
@@ -435,13 +449,18 @@
 
     <section class="lesson">
       <div class="eyebrow">Your Options</div>
-      <h2>Four moves, every turn</h2>
+      <h2>Five moves, every turn</h2>
       <ul class="plain">
         <li><strong>Hit</strong> — take another card.</li>
         <li><strong>Stand</strong> — keep your total and end your turn.</li>
         <li><strong>Double Down</strong> — double your bet, but you must take exactly one more card and then stand. Only allowed on your first two cards (and, at some table rules, on a hand you just split — see below).</li>
-        <li><strong>Split</strong> — if your first two cards match in rank, split them into two separate hands, each with its own bet and its own turn. This app allows one split per hand.</li>
+        <li><strong>Split</strong> — if two cards match in rank, split them into separate hands, each with its own bet and its own turn. This app allows resplitting up to 4 hands total — except aces, which get exactly one more card each and then stand.</li>
+        <li><strong>Surrender</strong> — give up now and get half your bet back, before taking any other action. Only available on your very first decision, and never after a split.</li>
       </ul>
+      <div class="callout">
+        <div class="head">When does surrender actually help?</div>
+        Almost never — most hands are better off hit or stood on. The two well-known exceptions, for this app's rules: a hard <strong>16 vs. a dealer 9, 10, or Ace</strong>, and a hard <strong>15 vs. a dealer 10</strong>. In both, you're expected to lose more than half your bet on average by playing it out, so taking the guaranteed half-loss wins in the long run. The Play tab's hint will call out "Surrender" specifically in those two spots.
+      </div>
     </section>
 
     <section class="lesson">
@@ -563,7 +582,7 @@
   <main class="screen" id="screen-strategy" hidden>
     <div class="eyebrow">Reference</div>
     <h2>Basic strategy chart</h2>
-    <p class="table-caption">One split per hand, no re-splitting. Table rules otherwise follow the shoe size set on the Play tab — <strong id="strategyRulesCaption">6 decks · dealer stands on all 17s · no double after split</strong> right now. Real single- and double-deck games are almost always spread this way (looser doubling rules make up for the player's edge from fewer decks), so the chart below updates for it; 3+ deck charts differ from each other by at most a card here or there, so they all share one chart.</p>
+    <p class="table-caption">Splits allowed up to 4 hands (standard casino cap), except aces — split aces get one card each and stand automatically, no resplitting. Table rules otherwise follow the shoe size set on the Play tab — <strong id="strategyRulesCaption">6 decks · dealer stands on all 17s · no double after split</strong> right now. Real single- and double-deck games are almost always spread this way (looser doubling rules make up for the player's edge from fewer decks), so the chart below updates for it; 3+ deck charts differ from each other by at most a card here or there, so they all share one chart.</p>
 
     <div class="legend">
       <div class="item"><span class="swatch H"></span>Hit</div>
@@ -573,6 +592,7 @@
     </div>
 
     <h3 style="font-size:.95rem;">Hard totals</h3>
+    <p class="table-caption">Two exceptions this chart doesn't show: <strong>surrender</strong> a non-pair hard 16 vs. a dealer 9, 10, or Ace, and a hard 15 vs. a dealer 10 — both beat every action listed below. See the Learn tab for why.</p>
     <div class="strategy-wrap"><table class="strategy" id="tblHard"></table></div>
 
     <h3 style="font-size:.95rem;">Soft totals</h3>
@@ -691,6 +711,9 @@
         <button class="btn" id="btnDouble">Double</button>
         <button class="btn" id="btnSplit">Split</button>
       </div>
+      <div class="action-bar" id="surrenderRow">
+        <button class="btn wide" id="btnSurrender">Surrender (forfeit half the bet)</button>
+      </div>
     </div>
 
     <!-- round over -->
@@ -719,6 +742,18 @@
   <main class="screen" id="screen-trainer" hidden>
     <div class="eyebrow">Drills</div>
     <h2>Train the count</h2>
+
+    <div class="table-zone" id="progressSummary">
+      <div class="zone-label"><span>Your Progress</span><span></span></div>
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="box"><div class="n mono" id="progSpeedAcc">—</div><div class="l">Speed Drill</div></div>
+        <div class="box"><div class="n mono" id="progStratAcc">—</div><div class="l">Strategy</div></div>
+        <div class="box"><div class="n mono" id="progQuizAcc">—</div><div class="l">TC Quiz</div></div>
+        <div class="box"><div class="n mono" id="progDrillModeAcc">—</div><div class="l">Count Drill</div></div>
+        <div class="box"><div class="n mono" id="progChallengeBest">—</div><div class="l">Best Run</div></div>
+        <div class="box"><div class="n mono" id="progHandsTotal">—</div><div class="l">Total Reps</div></div>
+      </div>
+    </div>
 
     <div class="segmented">
       <button type="button" class="active" id="segSpeed">Speed Drill</button>
@@ -1043,6 +1078,7 @@
         mode: game.mode,
         savedFreeBankroll: game.savedFreeBankroll,
         numDecks: game.numDecks,
+        soundOn: game.soundOn,
         stats: game.stats
       }));
     }catch(e){}
@@ -1067,6 +1103,7 @@
     runningCount: 0,
     showCount: false,
     hintsOn: true,
+    soundOn: saved && typeof saved.soundOn==='boolean' ? saved.soundOn : true,
     devPlaysOn: false,
     pendingBet: 0,
     phase: 'betting', // betting | insurance | player | dealer | done
@@ -1111,6 +1148,62 @@
   function countCard(card){
     if(!card.counted){ game.runningCount += hiLoValue(card.rank); card.counted = true; }
   }
+  // Single point of entry for every card that hits the table: draws, counts
+  // (unless it's a face-down hole card -- countCard runs later in
+  // revealDealer instead), pushes onto the hand, and plays the deal sound.
+  // Replaces what used to be a repeated drawCard()+countCard()+push()
+  // triplet at every call site.
+  function dealCard(hand, skipCount){
+    const card = drawCard();
+    if(!skipCount) countCard(card);
+    hand.cards.push(card);
+    playSound('card');
+    return card;
+  }
+
+  /* ============================================================
+     SOUND
+     Everything synthesized with the Web Audio API rather than shipping
+     audio files -- keeps the app a single self-contained HTML file.
+  ============================================================ */
+  let audioCtx = null;
+  function getAudioCtx(){
+    if(!audioCtx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return null;
+      audioCtx = new AC();
+    }
+    return audioCtx;
+  }
+  function tone(freq, duration, type, gainPeak, delay){
+    if(!game.soundOn) return;
+    const ctx = getAudioCtx();
+    if(!ctx) return;
+    try{
+      if(ctx.state==='suspended') ctx.resume();
+      const start = ctx.currentTime + (delay||0);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(gainPeak, start+0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start+duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start+duration+0.02);
+    }catch(e){}
+  }
+  function playSound(kind){
+    if(!game.soundOn) return;
+    if(kind==='chip') tone(720, 0.045, 'square', 0.05);
+    else if(kind==='card') tone(280, 0.035, 'triangle', 0.05);
+    else if(kind==='win'){ tone(659,0.11,'sine',0.09); tone(880,0.16,'sine',0.09,0.09); }
+    else if(kind==='lose') tone(180,0.28,'sawtooth',0.05);
+    else if(kind==='push') tone(440,0.12,'sine',0.06);
+    else if(kind==='click') tone(500,0.03,'square',0.04);
+  }
 
   /* ============================================================
      DOM REFS
@@ -1142,6 +1235,15 @@
     renderLedger();
   });
 
+  const soundToggle = $('soundToggle');
+  soundToggle.addEventListener('click', ()=>{
+    game.soundOn = !game.soundOn;
+    soundToggle.classList.toggle('on', game.soundOn);
+    soundToggle.setAttribute('aria-pressed', String(game.soundOn));
+    saveState();
+    if(game.soundOn) playSound('click'); // audible confirmation it's back on
+  });
+
   /* ============================================================
      TABS
   ============================================================ */
@@ -1155,6 +1257,7 @@
       tabs.forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
       Object.entries(screens).forEach(([k,el])=>{ el.hidden = (k!==btn.dataset.tab); });
+      if(btn.dataset.tab==='trainer') renderProgressSummary(); // Challenge/Count Drill numbers change on the Play tab
     });
   });
 
@@ -1255,8 +1358,41 @@
     return hand.cards.length===2 && !hand.isSplitAces &&
       (!hand.splitUsed || rules.das) && game.bankroll>=hand.bet;
   }
+  const MAX_SPLIT_HANDS = 4; // standard casino cap: one split, up to three resplits
+
+  // Late surrender: forfeit half the bet and end the hand before taking any
+  // other action. Only ever available on the very first decision of a single,
+  // unsplit hand -- never after hitting, splitting, or on a split-ace hand.
+  function canSurrenderFor(hand){
+    return hand.cards.length===2 && !hand.isSplitAces && !hand.splitUsed && game.playerHands.length===1;
+  }
+
+  // The two textbook cells where surrendering beats every other basic-strategy
+  // option, for the standard multi-deck S17 rules this app already assumes.
+  // Deliberately not folded into hardAction()/recommend() -- surrender is a
+  // narrow, well-known exception rather than a full deviation table, and
+  // keeping it a separate lookup avoids touching every call site that reads
+  // the H/S/D/P actions (buildTable, deviationAction, the Strategy Trainer).
+  function surrenderRecommended(hand, dealerCard){
+    if(hand.cards.length!==2) return false;
+    // Pairs defer entirely to the pair-strategy chart (e.g. 8,8 should split,
+    // not surrender, even though it totals 16) -- this lookup only covers
+    // non-pair hard 15s/16s.
+    if(rankValue(hand.cards[0].rank)===rankValue(hand.cards[1].rank)) return false;
+    const {total, soft} = handValue(hand.cards);
+    if(soft) return false;
+    const dk = dealerKey(dealerCard);
+    if(total===16 && ['9','10','A'].includes(dk)) return true;
+    if(total===15 && dk==='10') return true;
+    return false;
+  }
+
   function canSplitFor(hand){
-    return hand.cards.length===2 && !hand.splitUsed && game.playerHands.length===1 &&
+    // Note: hand.splitUsed marks "this hand came from a split" and gates
+    // double-after-split eligibility (see canDoubleFor) -- it does NOT mean
+    // "already resplit", so it's deliberately not part of this check. The
+    // hand-count cap is what actually limits resplitting.
+    return hand.cards.length===2 && game.playerHands.length<MAX_SPLIT_HANDS &&
       rankValue(hand.cards[0].rank)===rankValue(hand.cards[1].rank) && game.bankroll>=hand.bet;
   }
 
@@ -1288,7 +1424,7 @@
       html += `<div class="hand-meta"><span>${v.blackjack?'Blackjack':(v.total>21?'Bust '+v.total:(v.soft?'Soft ':'')+v.total)}</span><span class="bet">Bet $${hand.bet}</span>`;
       if(hand.result){
         const cls = hand.result==='win'||hand.result==='blackjack' ? 'win' : (hand.result==='push'?'push':'lose');
-        const label = {win:'Won', blackjack:'Blackjack!', push:'Push', lose:'Lost', bust:'Bust'}[hand.result] || hand.result;
+        const label = {win:'Won', blackjack:'Blackjack!', push:'Push', lose:'Lost', bust:'Bust', surrender:'Surrendered'}[hand.result] || hand.result;
         html += `<span class="hand-outcome ${cls}">${label}</span>`;
       }
       html += `</div></div>`;
@@ -1303,6 +1439,11 @@
     const rules = currentRules();
     const canDouble = canDoubleFor(hand, rules);
     const canSplit = canSplitFor(hand);
+
+    if(canSurrenderFor(hand) && surrenderRecommended(hand, game.dealer.cards[0])){
+      hintTextEl.innerHTML = 'Surrender';
+      return;
+    }
 
     let a = recommend(hand, game.dealer.cards[0], canDouble, canSplit, rules);
     let isDeviation = false;
@@ -1321,6 +1462,7 @@
     const canSplit = canSplitFor(hand);
     $('btnDouble').disabled = !canDouble;
     $('btnSplit').disabled = !canSplit;
+    $('surrenderRow').hidden = !canSurrenderFor(hand);
   }
 
   function setPhaseUI(){
@@ -1384,6 +1526,7 @@
         game.pendingBet += v;
         betAmtEl.textContent = '$' + game.pendingBet;
         updateDealButton();
+        playSound('chip');
       }
     });
   });
@@ -1445,10 +1588,10 @@
     resultAreaEl.innerHTML = '';
 
     // deal: player, dealer(up), player, dealer(hole, face down)
-    const p1 = drawCard(); countCard(p1); game.playerHands[0].cards.push(p1);
-    const dUp = drawCard(); countCard(dUp); game.dealer.cards.push(dUp);
-    const p2 = drawCard(); countCard(p2); game.playerHands[0].cards.push(p2);
-    const dHole = drawCard(); game.dealer.cards.push(dHole); // not counted until revealed
+    const p1 = dealCard(game.playerHands[0]);
+    const dUp = dealCard(game.dealer);
+    const p2 = dealCard(game.playerHands[0]);
+    const dHole = dealCard(game.dealer, true); // face down: not counted until revealed
 
     game.phase = 'insurance';
     saveState();
@@ -1520,7 +1663,7 @@
   ============================================================ */
   $('btnHit').addEventListener('click', ()=>{
     const hand = activeHand();
-    const c = drawCard(); countCard(c); hand.cards.push(c);
+    dealCard(hand);
     const v = handValue(hand.cards);
     if(v.total>=21) advanceHand();
     else renderAll();
@@ -1528,13 +1671,21 @@
 
   $('btnStand').addEventListener('click', ()=>{ advanceHand(); });
 
+  $('btnSurrender').addEventListener('click', ()=>{
+    const hand = activeHand();
+    if(!canSurrenderFor(hand)) return;
+    game.bankroll += Math.floor(hand.bet/2);
+    hand.result = 'surrender';
+    advanceHand();
+  });
+
   $('btnDouble').addEventListener('click', ()=>{
     const hand = activeHand();
     if(game.bankroll<hand.bet) return;
     game.bankroll -= hand.bet;
     hand.bet *= 2;
     hand.doubled = true;
-    const c = drawCard(); countCard(c); hand.cards.push(c);
+    dealCard(hand);
     advanceHand();
   });
 
@@ -1548,8 +1699,8 @@
     hand.splitUsed = true;
     game.playerHands.push(newHand);
     // deal one card to each
-    const c1 = drawCard(); countCard(c1); hand.cards.push(c1);
-    const c2 = drawCard(); countCard(c2); newHand.cards.push(c2);
+    dealCard(hand);
+    dealCard(newHand);
     if(isAces){
       // split aces: one card only, auto-stand both
       renderAll();
@@ -1582,11 +1733,11 @@
   function playDealer(){
     revealDealer();
     const h17 = currentRules().h17;
-    const anyLive = game.playerHands.some(h=>handValue(h.cards).total<=21);
+    const anyLive = game.playerHands.some(h=> !h.result && handValue(h.cards).total<=21);
     if(anyLive){
       let v = handValue(game.dealer.cards);
       while(v.total<17 || (h17 && v.total===17 && v.soft)){
-        const c = drawCard(); countCard(c); game.dealer.cards.push(c);
+        dealCard(game.dealer);
         v = handValue(game.dealer.cards);
       }
     }
@@ -1621,11 +1772,14 @@
     const wins = game.playerHands.filter(h=>h.result==='win'||h.result==='blackjack').length;
     const losses = game.playerHands.filter(h=>h.result==='lose'||h.result==='bust').length;
     const pushes = game.playerHands.filter(h=>h.result==='push').length;
+    const surrenders = game.playerHands.filter(h=>h.result==='surrender').length;
     let bannerCls='push', bannerText='Push';
-    if(wins>0 && losses===0){ bannerCls='win'; bannerText = game.playerHands.some(h=>h.result==='blackjack') ? 'Blackjack!' : 'You win'; }
+    if(surrenders>0 && wins===0 && losses===0 && pushes===0){ bannerCls='lose'; bannerText='Surrendered — half your bet back'; }
+    else if(wins>0 && losses===0){ bannerCls='win'; bannerText = game.playerHands.some(h=>h.result==='blackjack') ? 'Blackjack!' : 'You win'; }
     else if(losses>0 && wins===0 && pushes===0){ bannerCls='lose'; bannerText='Dealer wins'; }
     else if(wins>0 && losses>0){ bannerCls='push'; bannerText='Split result'; }
     resultAreaEl.innerHTML = `<div class="result-banner ${bannerCls}">${bannerText}</div>`;
+    playSound(bannerCls==='win' ? 'win' : bannerCls==='lose' ? 'lose' : 'push');
 
     if(game.mode==='challenge' && game.bankroll<5){
       game.phase = 'challengeOver';
@@ -1737,6 +1891,23 @@
     $('drillAttemptsN').textContent = s.drillAttempts;
     $('drillAccN').textContent = s.drillAttempts ? Math.round(100*s.drillExact/s.drillAttempts)+'%' : '—';
     $('drillStreakN').textContent = s.drillStreak;
+    renderProgressSummary();
+  }
+
+  // One glance at every practice number the app tracks, instead of each
+  // living only inside its own drill pane. Safe to call any time -- reads
+  // straight from game.stats and tolerates fields that don't exist yet on
+  // an older save (via the ||0 fallbacks already used throughout).
+  function renderProgressSummary(){
+    const s = game.stats;
+    const pct = (hit, total) => total ? Math.round(100*hit/total)+'%' : '—';
+    $('progSpeedAcc').textContent = pct(s.drillExact||0, s.drillAttempts||0);
+    $('progStratAcc').textContent = pct(s.stratCorrect||0, s.stratAttempts||0);
+    $('progQuizAcc').textContent = pct(s.quizCorrect||0, s.quizAttempts||0);
+    $('progDrillModeAcc').textContent = pct(s.liveCountExact||0, s.liveCountAttempts||0);
+    $('progChallengeBest').textContent = s.challengeBest ? s.challengeBest+' hands' : '—';
+    const totalReps = (s.drillAttempts||0) + (s.stratAttempts||0) + (s.quizAttempts||0) + (s.liveCountAttempts||0) + (s.challengeHands||0);
+    $('progHandsTotal').textContent = totalReps.toLocaleString('en-US');
   }
 
   $('btnDrillStart').addEventListener('click', ()=>{
@@ -1809,6 +1980,7 @@
     $('quizAttemptsN').textContent = s.quizAttempts;
     $('quizAccN').textContent = s.quizAttempts ? Math.round(100*s.quizCorrect/s.quizAttempts)+'%' : '—';
     $('quizStreakN').textContent = s.quizStreak;
+    renderProgressSummary();
   }
 
   function newQuizQuestion(){
@@ -1924,6 +2096,7 @@
     $('stratAttemptsN').textContent = s.stratAttempts||0;
     $('stratAccN').textContent = s.stratAttempts ? Math.round(100*(s.stratCorrect||0)/s.stratAttempts)+'%' : '—';
     $('stratStreakN').textContent = s.stratStreak||0;
+    renderProgressSummary();
   }
 
   $('stratHit').addEventListener('click', ()=>answerStrategy('H'));
@@ -2047,6 +2220,8 @@
      INIT
   ============================================================ */
   $('deckSelect').value = String(game.numDecks);
+  soundToggle.classList.toggle('on', game.soundOn);
+  soundToggle.setAttribute('aria-pressed', String(game.soundOn));
   ensureShoe();
   renderStrategyTables();
   drillStats();
